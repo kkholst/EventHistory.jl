@@ -16,11 +16,11 @@ type EventHistoryModel
 end
 
 function show(io::IO, obj::EventHistoryModel)
-    println("\nModel: ", obj.model,",", obj.eventtype, " ", obj.call)
+    print(io,"\nModel: ", obj.model,",", obj.eventtype, " ", obj.call)
     n = size(obj.eventtime,1)
     events::Int = sum(obj.eventtime[:,2])
-    println("\nn=",n,", events=",events,"\n")
-    println(obj.coefmat)
+    print(io,"\nn=",n,", events=",events,"\n\n")
+    print(io,obj.coefmat)
 end
 
 ###}}} EventHistoryModel
