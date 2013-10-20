@@ -63,8 +63,10 @@ Note dependencies on: `DataFrames`,`Distributions`
 
 ## TODO
 
+- Baseline estimates
 - Stratified analysis
 - Additive models
 - Frailty models
 - Residuals
+- Ties
 - ...
