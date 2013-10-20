@@ -11,7 +11,7 @@ Event History Analysis for the Julia Language
 ### Cox regression
 
 Ovarian cancer example (randomized trial)
-```R
+```julia
 > using RDatasets
 > using EventHistory
 > ovarian = data("survival", "ovarian");
@@ -34,7 +34,7 @@ n=26, events=12
 
 ### Cox regression, Left truncation+right censoring
 Simple example from the `survival` R-package
-```R
+```julia
 > d = DataFrame(start=[1,2,5,2,1,7,3,4,8,8],
                 stop=[2,3,6,7,8,9,9,9,14,17],
                 event=[1,1,1,1,1,1,1,0,0,0],
