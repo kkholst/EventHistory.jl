@@ -4,6 +4,89 @@ Event History Analysis for the Julia Language
   
 ## Event class
 
+Right-censored event-time
+```julia
+> stop   = [2,3,3];
+> status = [false,true,true];
+> e1 = Event(stop,status)
+3-element Array{Surv,1}:
+ 2+
+ 3 
+ 3 
+> Time(e1)
+3-element Array{Int64,1}:
+ 2
+ 3
+ 3
+> Status(e1)
+3-element Array{Bool,1}:
+ false
+  true
+  true
+```
+
+Right-censored+left truncation
+```julia
+> start  = [0,1,2];
+> e2 = Event(start,stop,status)
+3-element Array{SurvTrunc,1}:
+ (0;2+]
+ (1;3] 
+ (2;3] 
+> Entry(e2)
+3-element Array{Int64,1}:
+ 0
+ 1
+ 2
+```
+
+Competing risks model
+```julia
+> cause = [0,2,1];
+> e3 = Event(start,stop,cause)
+3-element Array{CompRisk,1}:
+ (0;2:0]
+ (1;3:+]
+ (2;3:+]
+> Status(e3)
+3-element Array{Bool,1}:
+  true
+ false
+ false
+> Cause(e3)
+3-element Array{Int64,1}:
+ 0
+ 2
+ 1
+```
+
+Interval censoring
+```julia
+> right  =  [2,3,Inf];
+> left =  [1,-Inf,1];
+> e4=Event(left,right,"interval")
+3-element Array{SurvInt,1}:
+ [1.0;2.0] 
+ (-Inf;3.0]
+ [Time;Inf)
+```
+
+Formula syntax (see also below)
+```julia
+> using DataFrames
+> d = DataFrame(start=start,stop=stop,status=status);
+> Event([:stop,:status],d)
+3-element Array{Surv,1}:
+ 2+
+ 3 
+ 3 
+> Event([:start,:stop,:status],d)
+3-element Array{SurvTrunc,1}:
+ (0;2+]
+ (1;3] 
+ (2;3] 
+```
+
 ## Cox regression
 
 ## Examples
