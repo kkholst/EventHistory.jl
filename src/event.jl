@@ -64,7 +64,7 @@ function show(io::IO, obj::SurvTrunc)
     print(io, "(", obj.Entry, ";", obj.Time, obj.Status>0 ? "":"+","]")
 end
 function show(io::IO, obj::CompRisk)
-    print(io, "(", obj.Entry, ";", obj.Time, ":", obj.Status==0 ? "+":obj.Status,"]")
+    print(io, "(", obj.Entry, ";", obj.Time, ":", obj.Status==0 ? "+" : obj.Cause,"]")
 end
 function show(io::IO, obj::SurvInt)
     if obj.Status==EventHistory.CensNot val=obj.Time
@@ -95,6 +95,7 @@ export Time,Entry,Status,Cause
 ###}}} Accessor
 
 ###{{{ Event constructor
+
 function Event(time::Union(Vector,DataVector),
                status::Union(Vector{Bool},DataVector{Bool}))
     n = size(time,1)    
@@ -149,4 +150,5 @@ function Event(var::Vector{Symbol}, data::DataFrame, censdef::Function=x->x.>0)
     end
     return Event(data[string(var[1])],data[string(var[2])],Status)
 end
+
 ###}}} Event constructor
