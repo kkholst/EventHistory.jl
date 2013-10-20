@@ -33,7 +33,6 @@ function phreg(X, t, status, entry, id=[]; beta=[], opt...)
     if size(beta,1)==0 beta=vec(zeros(p,1)) end
     pl(beta,indiv=false) =
         coxPL(beta,pre["X"],pre["XX"],pre["sign"],pre["jumps"],indiv)
-    ##    return pl(beta)
     val = NR(pl,beta,opt...)
     beta = vec(val[1]); grad = val[2]["grad"]'; steps = val[3]; 
     U = pl(beta,true)
@@ -43,12 +42,6 @@ function phreg(X, t, status, entry, id=[]; beta=[], opt...)
     coefmat = [beta sqrt(diag(V)) sqrt(diag(I))]
     coefmat = [coefmat 2*cdf(Normal(0,1),-abs(coefmat[:,1]./coefmat[:,2]))]
     coln = ["Estimate","S.E.","dU^-1/2","P-value"]
-    ##    return coln,coefmat,t,status
-    ## if (size(names,1)==p)
-    ##     coefmat = [names coefmat]
-    ##     coln = ["",coln]
-    ## end
-    ## return X,coln, coefmat
     EventHistoryModel("Cox",:(~1),EventHistory.Surv,
                       vec(beta),DataFrame(coefmat,coln),
                       iid,I,V,
@@ -102,7 +95,6 @@ function coxprep(exit,status,X=[],entry=[],id=[])
     ord0 = sortperm(status*1,rev=true)
     ord = sortperm(exit[ord0])
     ord = ord0[ord]
-    ## ord = sortperm(exit)
     if (truncation)
         sgn = sgn[ord]
     end
@@ -113,10 +105,6 @@ function coxprep(exit,status,X=[],entry=[],id=[])
     exit = exit[ord]
     status = status[ord]
     jumps = find(status)
-    ## println("status=\n", status)
-    ## println("time=\n",exit)
-    ## println("idx=\n",ord)
-    ##    return []
     ["X"=>X, "XX"=>XX, "jumps"=>jumps, "sign"=>sgn,
      "ord"=>ord, "time"=>exit, "id"=>[]]
 end
@@ -146,7 +134,6 @@ function coxPL(beta, X, XX, sgn, jumps, indiv=false)
     if size(sgn,1)==n ## Truncation
         eXb = sgn.*eXb;
     end
-    ##    return X,eXb,sgn
     S0 = revcumsum(eXb);
     E = similar(X);
     D2 = similar(XX)
@@ -163,7 +150,6 @@ function coxPL(beta, X, XX, sgn, jumps, indiv=false)
     D2 = D2[jumps,:]
     E = E[jumps,:]
     S0 = S0[jumps]
-    ##return Xb,eXb,S0
     grad = (X[jumps,:]-E); ## Score
     val = Xb[jumps]-log(S0); ## Partial log-likelihood
     hess = -(reshape(sum(D2,1),p,p)-E'E);
