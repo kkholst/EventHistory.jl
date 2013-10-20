@@ -1,6 +1,6 @@
 The EventHistory.jl package is licensed under the MIT Expat License:
 
-> Copyright (c) 2013: Klaus Holst.
+> Copyright (c) 2013: Klaus K. Holst.
 >
 > Permission is hereby granted, free of charge, to any person obtaining
 > a copy of this software and associated documentation files (the

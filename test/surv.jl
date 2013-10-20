@@ -1,4 +1,5 @@
-using Base.test
-using EventHistory
+using Base.test, EventHistory
 
-2+2
+## Basic tests:
+
+@test abs(-0.001)<0.1 
