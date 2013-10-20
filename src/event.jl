@@ -19,27 +19,31 @@ const CensInt = 3
 
 abstract EventClass
 #abstract EventInt <: EventClass
+
 immutable Surv <: EventClass
     Time::Number  # Exit time
     Status::Bool  # Censoring status
 end
+
 immutable SurvTrunc <: EventClass
     Entry::Number # Entry time
     Time::Number  # Exit time
     Status::Bool  # Censoring status    
 end
+
 immutable CompRisk <: EventClass
     Entry::Number # Entry time
     Time::Number  # Exit time
     Status::Bool  # Censoring status    
     Cause::Number
 end
+
 immutable SurvInt <: EventClass
     Time::Number     # Time 1
     Time2::Number    # Interval [Time;Time2]. Use Inf/-Inf for left/right censoring
-    Status::Uint8 # Censoring (0:none,1:right,2:left,3:interval)
+    Status::Int # Censoring (0:none,1:right,2:left,3:interval)
     function SurvInt(Time,Time2)
-        if Time2 > Time error("Time 2 larger than time 1") end
+        if Time>Time2 error("time 1 larger than time 2") end
         if (Time==Time2) 
             status = EventHistory.CensNot
         elseif Time2==Inf
@@ -48,10 +52,11 @@ immutable SurvInt <: EventClass
             status = EventHistory.CensLeft
         else
             status = EventHistory.CensInt
-            new(Time,Time2,status)
         end
+        new(Time,Time2,status)
     end
 end
+
 typealias Events Vector{EventClass}
 
 ###}}} Types
@@ -70,8 +75,8 @@ function show(io::IO, obj::SurvInt)
     if obj.Status==EventHistory.CensNot val=obj.Time
     elseif obj.Status==EventHistory.CensLeft val=string("(-Inf;",obj.Time2,"]")
     elseif obj.Status==EventHistory.CensRight val=string("[",Time,";Inf)") 
-        else val = string("[",Time,";",Time2,"]"); end
-    print(io, "(", obj.Entry, ";", obj.Time, obj.Status>0 ? "":"+","]")
+        else val = string("[",obj.Time,";",obj.Time2,"]"); end
+    print(io,val)
 end
 ###}}} show methods
 
@@ -107,11 +112,19 @@ function Event(time::Union(Vector,DataVector),
     E
 end
 
-function Event(time::Union(Vector,DataVector),status::Union(Vector,DataVector))
-    n = size(time,1)    
-    E = Array(EventHistory.Surv,n)
+function Event(time::Union(Vector,DataVector),status::Union(Vector,DataVector),
+               method::String="comprisk")
+    n = size(time,1)
+    if lowercase(method)=="interval"
+        E = Array(EventHistory.SurvInt,n)
+        for i=1:n
+            E[i] = EventHistory.SurvInt(time[i],status[i])
+        end
+        return E
+    end      
+    E = Array(EventHistory.CompRisk,n)
     for i=1:n
-        E[i] = EventHistory.CompRisk(0,time[i],status[i]==0,status[i])
+        E[i] = EventHistory.CompRisk(0,time[i],status[i]!=0,status[i])
     end
     E
 end
