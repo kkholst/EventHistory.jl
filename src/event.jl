@@ -34,8 +34,9 @@ end
 immutable CompRisk <: EventClass
     Entry::Number # Entry time
     Time::Number  # Exit time
-    Status::Bool  # Censoring status    
+    Status::Bool  # Censoring status
     Cause::Number
+    function CompRisk(Entry,Time,Cause) new(Entry,Time,Cause!=0,Cause) end
 end
 
 immutable SurvInt <: EventClass
@@ -124,7 +125,7 @@ function Event(time::Union(Vector,DataVector),status::Union(Vector,DataVector),
     end      
     E = Array(EventHistory.CompRisk,n)
     for i=1:n
-        E[i] = EventHistory.CompRisk(0,time[i],status[i]!=0,status[i])
+        E[i] = EventHistory.CompRisk(0,time[i],status[i])
     end
     E
 end
@@ -142,7 +143,7 @@ function Event(entry::Union(Vector,DataVector), time::Union(Vector,DataVector), 
     n = size(time,1)
     E = Array(EventHistory.CompRisk,n)
     for i=1:n
-        E[i] = EventHistory.CompRisk(entry[i],time[i],status[i]==0,status[i])
+        E[i] = EventHistory.CompRisk(entry[i],time[i],status[i])
     end
     E
 end
