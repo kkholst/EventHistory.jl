@@ -160,3 +160,8 @@ function coxPL(beta, X, XX, sgn, jumps, indiv=false)
 end
 
 ###}}} coxPL
+
+###{{{ predict
+
+
+###}}}

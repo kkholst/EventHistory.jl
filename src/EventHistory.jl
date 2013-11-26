@@ -7,7 +7,7 @@
 
 module EventHistory
 
-using Distributions, DataFrames, EventHistory
+using Distributions, DataFrames
 import Base.show
 
 include("event.jl")

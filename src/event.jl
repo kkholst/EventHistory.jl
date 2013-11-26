@@ -84,7 +84,7 @@ end
 ###{{{ Accessor
 # Meta-programming definitions of Time,Entry,Status,Cause access methods
 for key = (:Time, :Entry, :Status, :Cause)
-    for typ = (:Vector, :DataVector) 
+    for typ = (:Vector, :(DataFrames.DataVector))
         @eval function $(key){T<:EventClass}(e::$(typ){T})
             ##$(symbol(string("Event_",key)))(e)
             n = size(e,1);
@@ -102,8 +102,8 @@ export Time,Entry,Status,Cause
 
 ###{{{ Event constructor
 
-function Event(time::Union(Vector,DataVector),
-               status::Union(Vector{Bool},DataVector{Bool}))
+function Event(time::Union(Vector,DataFrames.DataVector),
+               status::Union(Vector{Bool},DataFrames.DataVector{Bool}))
     n = size(time,1)    
     E = Array(EventHistory.Surv,n)
     for i=1:n
@@ -113,7 +113,7 @@ function Event(time::Union(Vector,DataVector),
     E
 end
 
-function Event(time::Union(Vector,DataVector),status::Union(Vector,DataVector),
+function Event(time::Union(Vector,DataFrames.DataVector),status::Union(Vector,DataFrames.DataVector),
                method::String="comprisk")
     n = size(time,1)
     if lowercase(method)=="interval"
@@ -130,7 +130,7 @@ function Event(time::Union(Vector,DataVector),status::Union(Vector,DataVector),
     E
 end
 
-function Event(entry::Union(Vector,DataVector), time::Union(Vector,DataVector), status::Union(Vector{Bool},DataVector{Bool}))
+function Event(entry::Union(Vector,DataFrames.DataVector), time::Union(Vector,DataFrames.DataVector), status::Union(Vector{Bool},DataFrames.DataVector{Bool}))
     n = size(time,1)
     E = Array(EventHistory.SurvTrunc,n)
     for i=1:n
@@ -139,7 +139,7 @@ function Event(entry::Union(Vector,DataVector), time::Union(Vector,DataVector), 
     E
 end
 
-function Event(entry::Union(Vector,DataVector), time::Union(Vector,DataVector), status::Union(Vector,DataVector))
+function Event(entry::Union(Vector,DataFrames.DataVector), time::Union(Vector,DataFrames.DataVector), status::Union(Vector,DataFrames.DataVector))
     n = size(time,1)
     E = Array(EventHistory.CompRisk,n)
     for i=1:n
@@ -166,3 +166,4 @@ function Event(var::Vector{Symbol}, data::DataFrame, censdef::Function=x->x.>0)
 end
 
 ###}}} Event constructor
+

@@ -1,0 +1,135 @@
+#+TITLE: EventHistory
+#+PROPERTY: session *julia*
+#+PROPERTY: exports both
+#+PROPERTY: results output
+#+PROPERTY: session *julia*
+#+PROPERTY: tangle yes
+
+Event History Analysis for the Julia Language
+
+#+BEGIN_SRC julia :exports code
+  using EventHistory
+#+END_SRC
+
+  
+* Event class
+
+** Right-censored event-time
+#+BEGIN_SRC julia
+stop   = [2,3,3];
+status = [false,true,true];
+e1 = Event(stop,status)
+#+END_SRC
+
+
+#+BEGIN_SRC julia
+Time(e1)
+#+END_SRC
+
+
+#+BEGIN_SRC julia
+Status(e1)
+#+END_SRC
+
+
+** Right-censored+left truncation
+#+BEGIN_SRC julia
+start  = [0,1,2];
+e2 = Event(start,stop,status)
+#+END_SRC
+
+
+#+BEGIN_SRC julia
+Entry(e2)
+#+END_SRC
+
+** Competing risks model
+#+BEGIN_SRC julia
+cause = [0,2,1];
+e3 = Event(start,stop,cause)
+#+END_SRC
+
+
+#+BEGIN_SRC julia
+Status(e3)
+#+END_SRC
+
+
+#+BEGIN_SRC julia
+Cause(e3)
+#+END_SRC
+
+
+** Interval censoring
+#+BEGIN_SRC julia
+ right  =  [2,3,Inf];
+ left =  [1,-Inf,1];
+ e4=Event(left,right,"interval")
+#+END_SRC
+
+
+** Formula syntax (see also examples below)
+#+BEGIN_SRC julia
+using DataFrames
+d = DataFrame(start=start,stop=stop,status=status);
+Event([:stop,:status],d)
+#+END_SRC
+
+
+#+BEGIN_SRC julia
+Event([:start,:stop,:status],d)
+#+END_SRC
+
+
+* Cox regression
+
+** Examples
+
+*** Cox regression
+
+Ovarian cancer example (randomized trial)
+#+BEGIN_SRC julia
+using RDatasets
+using EventHistory
+ovarian = data("survival", "ovarian");
+ovarian["group"] = ovarian["rx"]-1;
+ovarian["S"] = Event([:futime,:fustat],ovarian);
+
+e = phreg(:(S~age+group),ovarian)
+#+END_SRC
+
+
+***  Cox regression, Left truncation+right censoring
+
+Simple example from the `survival` R-package
+#+BEGIN_SRC julia
+d = DataFrame(start=[1,2,5,2,1,7,3,4,8,8],
+                stop=[2,3,6,7,8,9,9,9,14,17],
+                event=[1,1,1,1,1,1,1,0,0,0],
+                x=[1,0,0,1,0,1,1,1,0,0]);
+d["S"] = Event([:start,:stop,:event],d);
+
+e = phreg(:(S~x),d)
+#+END_SRC
+
+
+* Installation 
+
+Get it from https://github.com/kkholst/EventHistory.jl
+
+#+BEGIN_SRC julia :eval never :exports none
+Pkg.add("EventHistory")
+#+END_SRC
+
+Note dependencies on: =DataFrames=, =Distributions=
+
+* ToDo
+
+- Baseline estimates
+- Stratified analysis
+- Additive models
+- Frailty models
+- Residuals
+- Ties
+- ...
+  

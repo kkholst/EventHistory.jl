@@ -57,3 +57,7 @@ d = DataFrame(start=[1,2,5,2,1,7,3,4,8,8],
               x=[1,0,0,1,0,1,1,1,0,0]);
 d["S"] = Event([:start,:stop,:event],d);
 e = phreg(:(S~x),d)
+
+
+
+
