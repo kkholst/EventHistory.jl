@@ -11,6 +11,8 @@ Event History Analysis for the Julia Language
   using EventHistory
 #+END_SRC
 
+#+RESULTS:
+
   
 * Event class
 
@@ -21,15 +23,35 @@ status = [false,true,true];
 e1 = Event(stop,status)
 #+END_SRC
 
+#+RESULTS:
+: 
+: 
+: 3-element Array{Surv,1}:
+:  2+
+:  3 
+:  3
+
 
 #+BEGIN_SRC julia
 Time(e1)
 #+END_SRC
 
+#+RESULTS:
+: 3-element Array{Int64,1}:
+:  2
+:  3
+:  3
+
 
 #+BEGIN_SRC julia
 Status(e1)
 #+END_SRC
+
+#+RESULTS:
+: 3-element Array{Bool,1}:
+:  false
+:   true
+:   true
 
 
 ** Right-censored+left truncation
@@ -38,10 +60,23 @@ start  = [0,1,2];
 e2 = Event(start,stop,status)
 #+END_SRC
 
+#+RESULTS:
+: 
+: 3-element Array{SurvTrunc,1}:
+:  (0;2+]
+:  (1;3] 
+:  (2;3]
+
 
 #+BEGIN_SRC julia
 Entry(e2)
 #+END_SRC
+
+#+RESULTS:
+: 3-element Array{Int64,1}:
+:  0
+:  1
+:  2
 
 ** Competing risks model
 #+BEGIN_SRC julia
@@ -49,15 +84,34 @@ cause = [0,2,1];
 e3 = Event(start,stop,cause)
 #+END_SRC
 
+#+RESULTS:
+: 
+: 3-element Array{CompRisk,1}:
+:  (0;2:+]
+:  (1;3:2]
+:  (2;3:1]
+
 
 #+BEGIN_SRC julia
 Status(e3)
 #+END_SRC
 
+#+RESULTS:
+: 3-element Array{Bool,1}:
+:  false
+:   true
+:   true
+
 
 #+BEGIN_SRC julia
 Cause(e3)
 #+END_SRC
+
+#+RESULTS:
+: 3-element Array{Int64,1}:
+:  0
+:  2
+:  1
 
 
 ** Interval censoring
@@ -67,6 +121,14 @@ Cause(e3)
  e4=Event(left,right,"interval")
 #+END_SRC
 
+#+RESULTS:
+: 
+: 
+: 3-element Array{SurvInt,1}:
+:  [1.0;2.0] 
+:  (-Inf;3.0]
+:  [Time;Inf)
+
 
 ** Formula syntax (see also examples below)
 #+BEGIN_SRC julia
@@ -75,10 +137,24 @@ d = DataFrame(start=start,stop=stop,status=status);
 Event([:stop,:status],d)
 #+END_SRC
 
+#+RESULTS:
+: 
+: 
+: 3-element Array{Surv,1}:
+:  2+
+:  3 
+:  3
+
 
 #+BEGIN_SRC julia
 Event([:start,:stop,:status],d)
 #+END_SRC
+
+#+RESULTS:
+: 3-element Array{SurvTrunc,1}:
+:  (0;2+]
+:  (1;3] 
+:  (2;3]
 
 
 * Cox regression
@@ -98,6 +174,24 @@ ovarian["S"] = Event([:futime,:fustat],ovarian);
 e = phreg(:(S~age+group),ovarian)
 #+END_SRC
 
+#+RESULTS:
+#+begin_example
+
+
+
+
+
+
+
+Model: Cox,Surv :(~(1))
+n=26, events=12
+
+2x4 DataFrame:
+         Estimate      S.E.  dU^-1/2    P-value
+[1,]     0.147327 0.0488846 0.046147 0.00258032
+[2,]    -0.803973  0.633937 0.632049   0.204718
+#+end_example
+
 
 ***  Cox regression, Left truncation+right censoring
 
@@ -111,6 +205,20 @@ d["S"] = Event([:start,:stop,:event],d);
 
 e = phreg(:(S~x),d)
 #+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+
+
+
+Model: Cox,Surv :(~(1))
+n=10, events=7
+
+1x4 DataFrame:
+          Estimate     S.E.  dU^-1/2  P-value
+[1,]    -0.0211052 0.838301 0.795177 0.979914
+#+end_example
 
 
 * Installation 
