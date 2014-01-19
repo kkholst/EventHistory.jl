@@ -1,7 +1,16 @@
+type D2Function
+    value::Float64
+    gradient::Array{Float64,1}
+    hessian::Array{Float64,2}
+end 
+
+
 ###{{{ Newton-Raphson
-function NR(f, x; iter=200,tol=1e-12,verbose=false,method=0,gamma=1)    
-    val = f(x)
-    S = val["grad"]';  H = val["hess"]; loglik=val["val"]    
+
+function NR(f, x; iter=200,tol=1e-12,verbose=false,method=0,gamma=1,trace=0)
+    val = f(x)::D2Function
+    # S = val.grad["grad"]';  H = val["hess"]; loglik=val["val"]
+    S = val.gradient::Vector{Float64};  H = val.hessian::Matrix{Float64}; loglik=val.value::Float64
     p = size(x,1)
     counter = 1
     for j=1:iter
@@ -16,6 +25,9 @@ function NR(f, x; iter=200,tol=1e-12,verbose=false,method=0,gamma=1)
         else
             W = pinv(-H)
         end
+        if trace>0
+            print(S')
+        end
         delta = W*S
         x0 = x; loglik0 = loglik
         lambda=1;
@@ -23,7 +35,8 @@ function NR(f, x; iter=200,tol=1e-12,verbose=false,method=0,gamma=1)
             x = x0+lambda*delta
             val = f(x)
             counter += 1
-            S = val["grad"]';  H = val["hess"]; loglik=val["val"]    
+            ##S = val["grad"]';  H = val["hess"]; loglik=val["val"]
+            S = val.gradient::Vector{Float64};  H = val.hessian::Matrix{Float64}; loglik=val.value::Float64
             s = mean(S.*S)
             if isnan(s) s=s0 end
             lambda = lambda/2.0
@@ -34,5 +47,6 @@ function NR(f, x; iter=200,tol=1e-12,verbose=false,method=0,gamma=1)
     end
     return x,val,counter
 end
+
 ###}}} Newton-Raphson
     
