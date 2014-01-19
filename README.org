@@ -168,10 +168,10 @@ Ovarian cancer example (randomized trial)
 using RDatasets
 using EventHistory
 ovarian = data("survival", "ovarian");
-ovarian["group"] = ovarian["rx"]-1;
-ovarian["S"] = Event([:futime,:fustat],ovarian);
+ovarian["Group"] = ovarian["Rx"]-1;
+ovarian["S"] = Event([:FUTime,:FUStat],ovarian);
 
-mm = phreg(:(S~age+group),ovarian)
+mm = phreg(:(S~Age+Group),ovarian)
 #+END_SRC
 
 #+RESULTS:
@@ -247,4 +247,5 @@ Pkg.add("EventHistory")
 - Frailty models
 - Residuals
 - ...
+  
   
