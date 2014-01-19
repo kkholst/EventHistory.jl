@@ -18,9 +18,9 @@ Event History Analysis for the Julia Language
 
 ** Right-censored event-time
 #+BEGIN_SRC julia
-stop   = [2,3,3];
-status = [false,true,true];
-e1 = Event(stop,status)
+  stop   = [2,3,3];
+  status = [false,true,true];
+  e1 = Event(stop,status)
 #+END_SRC
 
 #+RESULTS:
@@ -33,7 +33,7 @@ e1 = Event(stop,status)
 
 
 #+BEGIN_SRC julia
-Time(e1)
+  Time(e1)
 #+END_SRC
 
 #+RESULTS:
@@ -171,18 +171,11 @@ ovarian = data("survival", "ovarian");
 ovarian["group"] = ovarian["rx"]-1;
 ovarian["S"] = Event([:futime,:fustat],ovarian);
 
-e = phreg(:(S~age+group),ovarian)
+mm = phreg(:(S~age+group),ovarian)
 #+END_SRC
 
 #+RESULTS:
 #+begin_example
-
-
-
-
-
-
-
 Model: Cox,Surv :(~(1))
 n=26, events=12
 
@@ -192,6 +185,23 @@ n=26, events=12
 [2,]    -0.803973  0.633937 0.632049   0.204718
 #+end_example
 
+*** Prediction
+
+#+BEGIN_SRC julia
+## Prediction
+predict(mm,surv=false,X=[0 0]); ## Baseline
+predict(mm,X=[40.0 1.0]); ## Survival probabilities age 40, group 1
+predict(mm,X=[40 1],time=[100,400,600]); ## ... at time 100,400,600
+predict(mm,X=[40 1; 40 0],time=[600,100,400]) 
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_EXAMPLE
+3x2 Array{Float64,2}:
+ 0.955514  0.90332 
+ 0.998458  0.996557
+ 0.983064  0.962554
+#+END_EXAMPLE
 
 ***  Cox regression, Left truncation+right censoring
 
@@ -229,15 +239,12 @@ Get it from https://github.com/kkholst/EventHistory.jl
 Pkg.add("EventHistory")
 #+END_SRC
 
-Note dependencies on: =DataFrames=, =Distributions=
-
 * ToDo
 
-- Baseline estimates
-- Stratified analysis
 - Additive models
+- Stratified analysis
+- Ties
 - Frailty models
 - Residuals
-- Ties
 - ...
   

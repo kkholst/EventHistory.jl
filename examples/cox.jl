@@ -40,13 +40,19 @@ Event([:start,:stop,:status],d)
 ##################################################
 ### Cox regression
 ##################################################
-
+using EventHistory
 using RDatasets
 ovarian = data("survival", "ovarian");
-ovarian["group"] = ovarian["rx"]-1;
-ovarian["S"] = Event([:futime,:fustat],ovarian);
+ovarian["Group"] = ovarian["Rx"]-1;
+ovarian["S"] = Event([:FUTime,:FUStat],ovarian);
 
-e = phreg(:(S~age+group),ovarian)
+mm = phreg(:(S~Age+Group),ovarian)
+
+## Prediction
+predict(mm,surv=false,X=[0 0]) ## Baseline
+predict(mm,X=[40.0 1.0]) ## Survival probabilities age 40, group 1
+predict(mm,X=[40 1],time=[100,400,600]) ## ... at time 100,400,600
+predict(mm,X=[40 1; 40 0],time=[600,100,400]) 
 
 ##################################################
 ### Cox regression with left truncation

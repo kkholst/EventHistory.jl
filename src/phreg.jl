@@ -1,71 +1,54 @@
-###{{{ EventHistoryModel
-
-type EventHistoryModel
-    model::String
-    call::Expr
-    eventtype::DataType
-    coef::Vector
-    coefmat::DataFrame
-    IC::Matrix
-    invhess::Matrix
-    vcov::Matrix
-    opt::Vector
-    grad::Vector
-    X::Matrix
-    eventtime::Matrix    
-end
-
-function show(io::IO, obj::EventHistoryModel)
-    print(io,"\nModel: ", obj.model,",", obj.eventtype, " ", obj.call)
-    n = size(obj.eventtime,1)
-    events::Int = sum(obj.eventtime[:,2])
-    print(io,"\nn=",n,", events=",events,"\n\n")
-    print(io,obj.coefmat)
-end
-
-###}}} EventHistoryModel
-
 ###{{{ phreg
 
-function phreg(X, t, status, entry, id=[]; beta=[], opt...)
-    pre = coxprep(t,status,X,entry,id);
+function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector, id=[]; beta=[], opt...)
+    pre = EventHistory.coxprep(t,status,X,entry,id);
     p = size(X,2)
     if size(beta,1)==0 beta=vec(zeros(p,1)) end
     pl(beta,indiv=false) =
-        coxPL(beta,pre["X"],pre["XX"],pre["sign"],pre["jumps"],indiv)
-    val = NR(pl,beta,opt...)
-    beta = vec(val[1]); grad = val[2]["grad"]'; steps = val[3]; 
+        EventHistory.coxPL(beta,pre["X"],pre["XX"],pre["sign"],pre["jumps"],indiv)
+    val = EventHistory.NR(pl,beta; opt...)
+    beta = vec(val[1]); grad = val[2].gradient; steps = val[3]; 
     U = pl(beta,true)
-    I = -pinv(U["hess"])
-    iid = U["grad"]I
+    I = -pinv(U[3])
+    iid = U[2]*I
     V =  iid'iid
     coefmat = [beta sqrt(diag(V)) sqrt(diag(I))]
-    coefmat = [coefmat 2*cdf(Normal(0,1),-abs(coefmat[:,1]./coefmat[:,2]))]
-    coln = ["Estimate","S.E.","dU^-1/2","P-value"]
+    coefmat = [coefmat 2*Distributions.cdf(Distributions.Normal(0,1),-abs(coefmat[:,1]./coefmat[:,2]))]
+    coln = ["Estimate","S.E.","dU^-1/2","P-value"]    
+    cc = DataFrame(coefmat,coln)
+    chaz = [pre["jumps"] pre["time"][pre["jumps"]] cumsum(1/(U[4][pre["jumps"]]))]
     EventHistoryModel("Cox",:(~1),EventHistory.Surv,
-                      vec(beta),DataFrame(coefmat,coln),
+                      vec(beta),cc,                      
                       iid,I,V,
-                      [steps],vec(grad),X,[t status])
+                      [steps],vec(grad),X,[t status],
+                      chaz
+                      )
 end
 
-function phreg(formula, data; id=[], opt...)    
-    M = ModelFrame(formula,data);
-    S = convert(Vector,M.df[:,1])
+
+function phreg(formula::Expr, data::DataFrame; id=[], opt...)
+    fm = DataFrames.Formula(formula.args[2],formula.args[3])
+    M = ModelFrame(fm,data);    
+    ##S = convert(Vector,M.df[:,1])
+    S = M.df[:,1]
     time = EventHistory.Time(S)
     status = EventHistory.Status(S)
     entry = try EventHistory.Entry(S) catch [] end
     X = ModelMatrix(M)
     X = X.m[:,[2:size(X.m,2)]];
     res = EventHistory.phreg(X, time, status, entry; opt...)
+    ##res = EventHistory.phreg(X, time, status, entry)
     return res
     res.call = formula
     res.eventtype = typeof(S[1])
+    res.model = fm
     res
 end
 
 ###}}} phreg
 
 ###{{{ coxprep
+
 function coxprep(exit,status,X=[],entry=[],id=[])
     Truncation = size(entry,1)==size(exit,1)
     n = size(exit,1)
@@ -108,6 +91,7 @@ function coxprep(exit,status,X=[],entry=[],id=[])
     ["X"=>X, "XX"=>XX, "jumps"=>jumps, "sign"=>sgn,
      "ord"=>ord, "time"=>exit, "id"=>[]]
 end
+
 ###}}} coxprep
 
 ###{{{ revcumsum
@@ -126,7 +110,7 @@ end
 ###}}} revcumsum
 
 ###{{{ coxPL
-function coxPL(beta, X, XX, sgn, jumps, indiv=false)
+function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector, indiv=false)
     n = size(X,1);
     p = size(X,2);
     Xb = X*beta;
@@ -136,32 +120,85 @@ function coxPL(beta, X, XX, sgn, jumps, indiv=false)
     end
     S0 = revcumsum(eXb);
     E = similar(X);
-    D2 = similar(XX)
-    ## S1 = Array(Float64,n,p)
-    ## S2 = similar(XX)
+    D2 = similar(XX)    
+    S1 = Array(Float64,n,p)
+    S2 = similar(XX)
     for j=1:p
-        ## S1[:,j] = revcumsum(X[:,j].*eXb);
+        if (indiv) S1[:,j] = revcumsum(X[:,j].*eXb); end
         E[:,j] = revcumsum(X[:,j].*eXb)./S0; ## S1/S0(s)
     end;
     for j=1:size(XX,2)
-        ## S2.col(j) = revcumsum(XX.col(j).*eXb);
+        if (indiv) S2[:,j] = revcumsum(XX[:,j].*eXb); end
         D2[:,j] = revcumsum(XX[:,j].* eXb)./S0 ## int S2/S0(s)
     end;
     D2 = D2[jumps,:]
     E = E[jumps,:]
-    S0 = S0[jumps]
     grad = (X[jumps,:]-E); ## Score
-    val = Xb[jumps]-log(S0); ## Partial log-likelihood
+    val = Xb[jumps]-log(S0[jumps]); ## Partial log-likelihood
     hess = -(reshape(sum(D2,1),p,p)-E'E);
-    if !indiv
-        val = sum(val); grad = sum(grad,1)
-    end
-    ["val"=>val, "grad"=>grad, "hess"=>hess]    
+    if indiv
+        return(val,grad,hess,vec(S0),S1,S2,E)
+    end        
+    val = sum(val); grad = sum(grad,1)   
+    EventHistory.D2Function(val[1],vec(grad),hess)
 end
 
 ###}}} coxPL
 
-###{{{ predict
+
+function coef(mm::EventHistoryModel)
+    mm.coef
+end
+
+function vcov(mm::EventHistoryModel)
+    mm.vcov
+end
+
+function coeftable(mm::EventHistoryModel)
+    mm.coefmat
+end
 
 
-###}}}
+# compute the values of a step function, 
+# i.e. how many of the jumps are smaller or
+# equal to the eval points 
+function sindex(jump::Vector, eval::Vector)
+    N = size(eval,1)
+    n = size(jump,1)
+    index = Array(Int64,N)
+    j = 1::Int64
+    for t=1:N
+        while (j<n) & (jump[j]<eval[t])
+            j += 1
+        end
+        index[t] = j
+    end
+    return(index)
+end
+
+function predict(mm::EventHistory.EventHistoryModel; X=[]'::Matrix,time=mm.eventtime[:,1]::Vector,surv=true)
+    ord = sortperm(time)
+    idx = sindex(mm.chaz[:,2],time[ord,1])
+    L0 = mm.chaz[:,3][idx]
+    L0 = L0[sortperm(ord)]
+    arraytype = size(X,1)==1 
+    if size(X,2)==0
+        X = mm.X
+        arraytype = true
+    end
+    if arraytype
+        H = exp(X*coef(mm))
+        res = L0.*H
+        if surv res = exp(-res) end
+        return(res)        
+    end    
+    res = Array(Float64,size(time,1),size(X,1))
+    for i=1:size(X,1)
+        res[:,i] = L0.*exp(X[i,:]*coef(mm))
+    end
+    if surv res = exp(-res) end
+    return(res)
+end
+
+
+
