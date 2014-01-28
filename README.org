@@ -23,8 +23,6 @@
 #+END_SRC
 
 #+RESULTS:
-: 
-: 
 : 3-element Array{Surv,1}:
 :  2+
 :  3 
@@ -60,7 +58,6 @@ e2 = Event(start,stop,status)
 #+END_SRC
 
 #+RESULTS:
-: 
 : 3-element Array{SurvTrunc,1}:
 :  (0;2+]
 :  (1;3] 
@@ -84,7 +81,6 @@ e3 = Event(start,stop,cause)
 #+END_SRC
 
 #+RESULTS:
-: 
 : 3-element Array{CompRisk,1}:
 :  (0;2:+]
 :  (1;3:2]
@@ -121,8 +117,6 @@ Cause(e3)
 #+END_SRC
 
 #+RESULTS:
-: 
-: 
 : 3-element Array{SurvInt,1}:
 :  [1.0;2.0] 
 :  (-Inf;3.0]
@@ -137,8 +131,6 @@ Event([:stop,:status],d)
 #+END_SRC
 
 #+RESULTS:
-: 
-: 
 : 3-element Array{Surv,1}:
 :  2+
 :  3 
@@ -175,13 +167,14 @@ mm = phreg(:(S~Age+Group),ovarian)
 
 #+RESULTS:
 #+begin_example
-Model: Cox,Surv :(~(1))
+Model: Cox,Surv; S ~ Age + Group
 n=26, events=12
 
-2x4 DataFrame:
-         Estimate      S.E.  dU^-1/2    P-value
-[1,]     0.147327 0.0488846 0.046147 0.00258032
-[2,]    -0.803973  0.633937 0.632049   0.204718
+2x4 DataFrame
+|-------|-----------|-----------|----------|------------|
+| Row # | Estimate  | S.E.      | dU^-1/2  | P-value    |
+| 1     | 0.147327  | 0.0488846 | 0.046147 | 0.00258032 |
+| 2     | -0.803973 | 0.633937  | 0.632049 | 0.204718   |
 #+end_example
 
 **** Prediction
@@ -229,16 +222,13 @@ e = phreg(:(S~x),d)
 
 #+RESULTS:
 #+begin_example
-
-
-
-
-Model: Cox,Surv :(~(1))
+Model: Cox,SurvTrunc; S ~ x
 n=10, events=7
 
-1x4 DataFrame:
-          Estimate     S.E.  dU^-1/2  P-value
-[1,]    -0.0211052 0.838301 0.795177 0.979914
+1x4 DataFrame
+|-------|------------|----------|----------|----------|
+| Row # | Estimate   | S.E.     | dU^-1/2  | P-value  |
+| 1     | -0.0211052 | 0.838301 | 0.795177 | 0.979914 |
 #+end_example
 
 
