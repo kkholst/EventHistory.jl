@@ -46,20 +46,30 @@ ovarian = data("survival", "ovarian");
 ovarian["Group"] = ovarian["Rx"]-1;
 ovarian["S"] = Event([:FUTime,:FUStat],ovarian);
 
-mm = phreg(:(S~Age+Group),ovarian)
+mm = phreg(:(S~Age+Group),ovarian);
 
 ## Prediction
 predict(mm,surv=false,X=[0 0]) ## Baseline
-s40 = predict(mm,X=[40.0 1.0]) ## Survival probabilities age 40, group 1
-predict(mm,X=[40 1],time=[100,400,600]) ## ... at time 100,400,600
-predict(mm,X=[40 1; 40 0],time=[600,100,400])
-
+s56 = predict(mm,X=[56 1],order=true) ## Survival probabilities age 40, group 1
+predict(mm,X=[56 0],time=[100,400,600]) ## ... at time 100,400,600
+predict(mm,X=[56 1; 56 0],time=[600,100,400]) ## ... both groups
 
 using Winston
-t = mm.eventtime[:,1]
-ord = sortperm(t)
-plot(t[ord],s40[ord])
+plot(s56[:,1],s56[:,2])
 
+
+s = predict(mm,X=[56 1; 56 0],order=true)
+pr = DataFrame([[s[:,1:2]; s[:,[1,3]]] rep(["Group1","Group2"],each=size(s,1))],["Time","S","Group"])
+
+using Gadfly
+p = plot(pr, x="Time", y="S",color="Group",
+         Guide.ylabel("Survival probability"), Guide.title("Age 56"))        
+draw(PNG("surv.png",7inch,7inch),p)
+
+
+p = plot(x=s56[:,1],y=s56[:,2],
+         Guide.xlabel("Time"), Guide.ylabel("Survival probability"), Guide.title("Age 56, Group 1"));
+draw(PNG("surv.png",6inch,6inch),p)
 
 ##################################################
 ### Cox regression with left truncation

@@ -26,3 +26,32 @@ predict(c2,surv=TRUE)
 basehaz(c1,centered=FALSE)
 predict(c2,surv=FALSE)
 basehaz(c1)
+
+
+
+data(ovarian)
+ovarian$age40 <- ovarian$age-40
+m1 <- coxph(Surv(futime,fustat>0)~age40,data=ovarian)
+basehaz(m1,centered=TRUE)
+-log(survfit(m1)$surv)
+age0 <- mean(ovarian$age40)
+plot(survfit(m1,newdata=data.frame(age40=age0)),ylim=c(0.4,1))
+
+
+library(mets)
+m2 <- mets::phreg(Surv(futime,fustat>0)~age40,data=ovarian)
+H0 <- predict(m2,surv=TRUE,X=0)
+s <- predict(m2,surv=TRUE,X=age0)
+points(surv~time,s,col="blue",pch=16)
+
+
+library(mets)
+m2 <- mets::phreg(Surv(futime,fustat>0)~age+factor(rx),data=ovarian)
+H0 <- predict(m2,surv=TRUE,X=cbind(56,0))
+s <- predict(m2,surv=TRUE,X=cbind(56,0))
+
+s56 <- predict(m2,surv=TRUE,X=cbind(56,1))
+
+
+
+plot(m2,col="red",add=TRUE)

@@ -14,6 +14,7 @@ using Distributions, DataFrames
 import Base.show
 import DataFrames: ModelFrame, ModelMatrix
 import StatsBase: coef, coeftable, confint, vcov, predict
+import Calculus: deparse
 using StatsBase: StatisticalModel, RegressionModel
 
 type EventHistoryModel <: RegressionModel
@@ -33,7 +34,10 @@ type EventHistoryModel <: RegressionModel
 end
 
 function show(io::IO, obj::EventHistoryModel)
-    print(io,"\nModel: ", obj.model,",", obj.eventtype, " ", obj.call)
+    outcome = deparse(obj.call.args[2])
+    covars = deparse(obj.call.args[3])
+    print(io,"\nModel: ", obj.model,",", obj.eventtype, "; ",
+          string("$outcome ~ $covars"))
     n = size(obj.eventtime,1)
     events::Int = sum(obj.eventtime[:,2])
     print(io,"\nn=",n,", events=",events,"\n\n")

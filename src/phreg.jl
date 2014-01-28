@@ -28,20 +28,17 @@ end
 
 function phreg(formula::Expr, data::DataFrame; id=[], opt...)
     fm = DataFrames.Formula(formula.args[2],formula.args[3])
-    M = ModelFrame(fm,data);    
-    ##S = convert(Vector,M.df[:,1])
-    S = M.df[:,1]
+    M = ModelFrame(fm,data);
+    S = M.df[:,1] ## convert(Vector,M.df[:,1])
     time = EventHistory.Time(S)
     status = EventHistory.Status(S)
     entry = try EventHistory.Entry(S) catch [] end
     X = ModelMatrix(M)
     X = X.m[:,[2:size(X.m,2)]];
     res = EventHistory.phreg(X, time, status, entry; opt...)
-    ##res = EventHistory.phreg(X, time, status, entry)
-    return res
+    ##    res = (X, time, status, entry; opt...)
     res.call = formula
     res.eventtype = typeof(S[1])
-    res.model = fm
     res
 end
 
@@ -145,20 +142,7 @@ end
 
 ###}}} coxPL
 
-
-function coef(mm::EventHistoryModel)
-    mm.coef
-end
-
-function vcov(mm::EventHistoryModel)
-    mm.vcov
-end
-
-function coeftable(mm::EventHistoryModel)
-    mm.coefmat
-end
-
-
+###{{{ predict
 # compute the values of a step function, 
 # i.e. how many of the jumps are smaller or
 # equal to the eval points 
@@ -176,7 +160,8 @@ function sindex(jump::Vector, eval::Vector)
     return(index)
 end
 
-function predict(mm::EventHistory.EventHistoryModel; X=[]'::Matrix,time=mm.eventtime[:,1]::Vector,surv=true)
+## Returns [time surv-prob]
+function predict(mm::EventHistory.EventHistoryModel; X=[]'::Matrix,time=mm.eventtime[:,1]::Vector,surv=true,order=false)
     ord = sortperm(time)
     idx = sindex(mm.chaz[:,2],time[ord,1])
     L0 = mm.chaz[:,3][idx]
@@ -189,16 +174,32 @@ function predict(mm::EventHistory.EventHistoryModel; X=[]'::Matrix,time=mm.event
     if arraytype
         H = exp(X*coef(mm))
         res = L0.*H
-        if surv res = exp(-res) end
-        return(res)        
-    end    
-    res = Array(Float64,size(time,1),size(X,1))
-    for i=1:size(X,1)
-        res[:,i] = L0.*exp(X[i,:]*coef(mm))
+    else 
+        res = Array(Float64,size(time,1),size(X,1))
+        for i=1:size(X,1)
+            res[:,i] = L0.*exp(X[i,:]*coef(mm))
+        end
     end
     if surv res = exp(-res) end
+    res = [time res]
+    if order
+        return(res[sortperm(time),:])
+    end
     return(res)
 end
 
+###}}} predict
+
+function coef(mm::EventHistoryModel)
+    mm.coef
+end
+
+function vcov(mm::EventHistoryModel)
+    mm.vcov
+end
+
+function coeftable(mm::EventHistoryModel)
+    mm.coefmat
+end
 
 
