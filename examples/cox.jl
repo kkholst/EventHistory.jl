@@ -50,9 +50,16 @@ mm = phreg(:(S~Age+Group),ovarian)
 
 ## Prediction
 predict(mm,surv=false,X=[0 0]) ## Baseline
-predict(mm,X=[40.0 1.0]) ## Survival probabilities age 40, group 1
+s40 = predict(mm,X=[40.0 1.0]) ## Survival probabilities age 40, group 1
 predict(mm,X=[40 1],time=[100,400,600]) ## ... at time 100,400,600
-predict(mm,X=[40 1; 40 0],time=[600,100,400]) 
+predict(mm,X=[40 1; 40 0],time=[600,100,400])
+
+
+using Winston
+t = mm.eventtime[:,1]
+ord = sortperm(t)
+plot(t[ord],s40[ord])
+
 
 ##################################################
 ### Cox regression with left truncation
@@ -62,7 +69,7 @@ d = DataFrame(start=[1,2,5,2,1,7,3,4,8,8],
               event=[1,1,1,1,1,1,1,0,0,0],
               x=[1,0,0,1,0,1,1,1,0,0]);
 d["S"] = Event([:start,:stop,:event],d);
-e = phreg(:(S~x),d)
+mm = phreg(:(S~x),d)
 
 
 

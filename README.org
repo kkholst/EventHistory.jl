@@ -5,7 +5,7 @@
 #+PROPERTY: session *julia*
 #+PROPERTY: tangle yes
 
-Event History Analysis for the Julia Language
+* Event History Analysis for the Julia Language
 
 #+BEGIN_SRC julia :exports code
   using EventHistory
@@ -236,15 +236,15 @@ n=10, events=7
 Get it from https://github.com/kkholst/EventHistory.jl
 
 #+BEGIN_SRC julia :eval never :exports none
-Pkg.add("EventHistory")
+Pkg.clone("https://github.com/kkholst/EventHistory.jl")
 #+END_SRC
 
-* ToDo
+* Roadmap
 
 - Additive models
 - Stratified analysis
-- Ties
-- Frailty models
+- Handle ties (Efron)
+- Frailty models (Copula)
 - Residuals
 - ...
   
