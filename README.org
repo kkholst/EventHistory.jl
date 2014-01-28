@@ -1,4 +1,3 @@
-#+TITLE: EventHistory
 #+PROPERTY: session *julia*
 #+PROPERTY: exports both
 #+PROPERTY: results output
@@ -14,9 +13,9 @@
 #+RESULTS:
 
   
-* Event class
+** Event class
 
-** Right-censored event-time
+*** Right-censored event-time
 #+BEGIN_SRC julia
   stop   = [2,3,3];
   status = [false,true,true];
@@ -54,7 +53,7 @@ Status(e1)
 :   true
 
 
-** Right-censored+left truncation
+*** Right-censored+left truncation
 #+BEGIN_SRC julia
 start  = [0,1,2];
 e2 = Event(start,stop,status)
@@ -78,7 +77,7 @@ Entry(e2)
 :  1
 :  2
 
-** Competing risks model
+*** Competing risks model
 #+BEGIN_SRC julia
 cause = [0,2,1];
 e3 = Event(start,stop,cause)
@@ -114,7 +113,7 @@ Cause(e3)
 :  1
 
 
-** Interval censoring
+*** Interval censoring
 #+BEGIN_SRC julia
  right  =  [2,3,Inf];
  left =  [1,-Inf,1];
@@ -130,7 +129,7 @@ Cause(e3)
 :  [Time;Inf)
 
 
-** Formula syntax (see also examples below)
+*** Formula syntax (see also examples below)
 #+BEGIN_SRC julia
 using DataFrames
 d = DataFrame(start=start,stop=stop,status=status);
@@ -157,11 +156,11 @@ Event([:start,:stop,:status],d)
 :  (2;3]
 
 
-* Cox regression
+** Cox regression
 
-** Examples
+*** Examples
 
-*** Cox regression
+**** Cox regression
 
 Ovarian cancer example (randomized trial)
 #+BEGIN_SRC julia
@@ -185,7 +184,7 @@ n=26, events=12
 [2,]    -0.803973  0.633937 0.632049   0.204718
 #+end_example
 
-*** Prediction
+**** Prediction
 
 #+BEGIN_SRC julia
 ## Prediction
@@ -215,7 +214,7 @@ draw(PNG("surv.png",7inch,7inch),p)
 
 [[file:examples/surv.png]]
 
-***  Cox regression, Left truncation+right censoring
+****  Cox regression, Left truncation+right censoring
 
 Simple example from the `survival` R-package
 #+BEGIN_SRC julia
@@ -243,7 +242,7 @@ n=10, events=7
 #+end_example
 
 
-* Installation 
+** Installation 
 
 Get it from https://github.com/kkholst/EventHistory.jl
 
@@ -251,7 +250,7 @@ Get it from https://github.com/kkholst/EventHistory.jl
 Pkg.clone("https://github.com/kkholst/EventHistory.jl")
 #+END_SRC
 
-* Roadmap
+** Roadmap
 
 - Additive models
 - Stratified analysis
