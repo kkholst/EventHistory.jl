@@ -49,16 +49,16 @@ ovarian[:S] = Event([:FUTime,:FUStat],ovarian);
 mm = phreg(S~Age+Group,ovarian);
 
 ## Prediction
-predict(mm,surv=false,X=[0 0]) ## Baseline
-s56 = predict(mm,X=[56 1],order=true) ## Survival probabilities age 40, group 1
-predict(mm,X=[56 0],time=[100,400,600]) ## ... at time 100,400,600
+predict(mm,surv=false,X=[0 0]); ## Baseline
+s56 = predict(mm,X=[56 1],order=true); ## Survival probabilities age 40, group 1
+predict(mm,X=[56 0],time=[100,400,600]); ## ... at time 100,400,600
 predict(mm,X=[56 1; 56 0],time=[600,100,400]) ## ... both groups
 
 using Winston
 plot(s56[:,1],s56[:,2])
 
 s = predict(mm,X=[56 1; 56 0],order=true)
-pr = DataFrame([[s[:,1:2]; s[:,[1,3]]] rep(["Group1","Group2"],each=size(s,1))],["Time","S","Group"])
+pr = DataFrame([[s[:,1:2]; s[:,[1,3]]] rep(["Group1","Group2"],each=size(s,1))],[:Time,:S,:Group])
 using Gadfly
 p = plot(pr, x="Time", y="S",color="Group",
          Guide.ylabel("Survival probability"), Guide.title("Age 56"))        
