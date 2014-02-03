@@ -28,7 +28,7 @@ Cause(e3)
 ## Interval censoring
 right  =  [2,3,Inf];
 left =  [1,-Inf,1];
-e4=Event(left,right,"interval")
+e4=Event(left,right,:interval)
 
 ## Formula syntax (see also below)
 using DataFrames
@@ -43,10 +43,10 @@ Event([:start,:stop,:status],d)
 using EventHistory
 using RDatasets
 ovarian = data("survival", "ovarian");
-ovarian["Group"] = ovarian["Rx"]-1;
-ovarian["S"] = Event([:FUTime,:FUStat],ovarian);
+ovarian[:Group] = ovarian[:Rx]-1;
+ovarian[:S] = Event([:FUTime,:FUStat],ovarian);
 
-mm = phreg(:(S~Age+Group),ovarian);
+mm = phreg(S~Age+Group,ovarian);
 
 ## Prediction
 predict(mm,surv=false,X=[0 0]) ## Baseline
@@ -76,8 +76,8 @@ d = DataFrame(start=[1,2,5,2,1,7,3,4,8,8],
               stop=[2,3,6,7,8,9,9,9,14,17],
               event=[1,1,1,1,1,1,1,0,0,0],
               x=[1,0,0,1,0,1,1,1,0,0]);
-d["S"] = Event([:start,:stop,:event],d);
-mm = phreg(:(S~x),d)
+d[:S] = Event([:start,:stop,:event],d);
+mm = phreg(S~x,d)
 
 
 

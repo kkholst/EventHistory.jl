@@ -14,10 +14,10 @@ function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector, id=[]; beta=
     V =  iid'iid
     coefmat = [beta sqrt(diag(V)) sqrt(diag(I))]
     coefmat = [coefmat 2*Distributions.cdf(Distributions.Normal(0,1),-abs(coefmat[:,1]./coefmat[:,2]))]
-    coln = ["Estimate","S.E.","dU^-1/2","P-value"]    
+    coln = [:Estimate,symbol("S.E"),symbol("dU^-1/2"),symbol("P-value")]
     cc = DataFrame(coefmat,coln)
     chaz = [pre["jumps"] pre["time"][pre["jumps"]] cumsum(1/(U[4][pre["jumps"]]))]
-    EventHistoryModel("Cox",:(~1),EventHistory.Surv,
+    EventHistoryModel("Cox",Formula(:.,:.),EventHistory.Surv,
                       vec(beta),cc,                      
                       iid,I,V,
                       [steps],vec(grad),X,[t status],
@@ -26,9 +26,9 @@ function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector, id=[]; beta=
 end
 
 
-function phreg(formula::Expr, data::DataFrame; id=[], opt...)
-    fm = DataFrames.Formula(formula.args[2],formula.args[3])
-    M = ModelFrame(fm,data);
+function phreg(formula::Formula, data::DataFrame; id=[], opt...)
+    ## fm = DataFrames.Formula(formula.args[2],formula.args[3])
+    M = ModelFrame(formula,data);
     S = M.df[:,1] ## convert(Vector,M.df[:,1])
     time = EventHistory.Time(S)
     status = EventHistory.Status(S)
@@ -36,8 +36,7 @@ function phreg(formula::Expr, data::DataFrame; id=[], opt...)
     X = ModelMatrix(M)
     X = X.m[:,[2:size(X.m,2)]];
     res = EventHistory.phreg(X, time, status, entry; opt...)
-    ##    res = (X, time, status, entry; opt...)
-    res.call = formula
+    res.formula = formula
     res.eventtype = typeof(S[1])
     res
 end
@@ -200,6 +199,5 @@ end
 
 function coeftable(mm::EventHistoryModel)
     mm.coefmat
+
 end
-
-

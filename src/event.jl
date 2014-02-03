@@ -113,6 +113,13 @@ function Event(time::Union(Vector,DataFrames.DataVector),
     E
 end
 
+
+function Event(time::Union(Vector,DataFrames.DataVector),
+               status::Union(Vector,DataFrames.DataVector),
+               method::Symbol=:comprisk)
+    Event(time,status,string(method))
+end
+
 function Event(time::Union(Vector,DataFrames.DataVector),status::Union(Vector,DataFrames.DataVector),
                method::String="comprisk")
     n = size(time,1)
@@ -152,17 +159,17 @@ end
 function Event(var::Vector{Symbol}, data::DataFrame, censdef::Function=x->x.>0)
     p = size(var,1)
     if p==2
-        Status = data[string(var[2])]
+        Status = data[var[2]]
     else
-        Status = data[string(var[3])]
+        Status = data[var[3]]
     end
     if typeof(censdef)==Function
         Status = censdef(Status)
     end
     if p==2
-        return Event(data[string(var[1])],Status)
+        return Event(data[var[1]],Status)
     end
-    return Event(data[string(var[1])],data[string(var[2])],Status)
+    return Event(data[var[1]],data[var[2]],Status)
 end
 
 ###}}} Event constructor

@@ -19,7 +19,7 @@ using StatsBase: StatisticalModel, RegressionModel
 
 type EventHistoryModel <: RegressionModel
     model::String
-    call::Expr
+    formula::Formula
     eventtype::DataType
     coef::Vector{Float64}
     coefmat::DataFrame
@@ -34,10 +34,11 @@ type EventHistoryModel <: RegressionModel
 end
 
 function show(io::IO, obj::EventHistoryModel)
-    outcome = deparse(obj.call.args[2])
-    covars = deparse(obj.call.args[3])
-    print(io,"\nModel: ", obj.model,",", obj.eventtype, "; ",
-          string("$outcome ~ $covars"))
+    ## outcome = deparse(obj.call.args[2])
+    ## covars = deparse(obj.call.args[3])
+    ## print(io,"\nModel: ", obj.model,",", obj.eventtype, "; ",
+    ##       string("$outcome ~ $covars"))
+    print(io,obj.formula,"\n")
     n = size(obj.eventtime,1)
     events::Int = sum(obj.eventtime[:,2])
     print(io,"\nn=",n,", events=",events,"\n\n")
