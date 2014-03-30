@@ -42,7 +42,7 @@ Event([:start,:stop,:status],d)
 ##################################################
 using EventHistory
 using RDatasets
-ovarian = data("survival", "ovarian");
+ovarian = dataset("survival", "ovarian");
 ovarian[:Group] = ovarian[:Rx]-1;
 ovarian[:S] = Event([:FUTime,:FUStat],ovarian);
 

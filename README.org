@@ -159,7 +159,7 @@ Ovarian cancer example (randomized trial)
 #+BEGIN_SRC julia
 using RDatasets
 using EventHistory
-ovarian = data("survival", "ovarian");
+ovarian = dataset("survival", "ovarian");
 ovarian[:Group] = ovarian[:Rx]-1;
 ovarian[:S] = Event([:FUTime,:FUStat],ovarian);
 

@@ -14,9 +14,9 @@ function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector, id=[]; beta=
     V =  iid'iid
     coefmat = [beta sqrt(diag(V)) sqrt(diag(I))]
     coefmat = [coefmat 2*Distributions.cdf(Distributions.Normal(0,1),-abs(coefmat[:,1]./coefmat[:,2]))]
-    coln = [:Estimate,symbol("S.E"),symbol("dU^-1/2"),symbol("P-value")]
-    cc = DataFrame(coefmat,coln)
-    chaz = [pre["jumps"] pre["time"][pre["jumps"]] cumsum(1/(U[4][pre["jumps"]]))]
+    coln = [:Estimate,:SE,:naiveSE,symbol("pvalue")]
+    cc = convert(DataFrame,coefmat); names!(cc,coln);
+    chaz = [pre["jumps"] pre["time"][pre["jumps"]] cumsum(1./(U[4][pre["jumps"]]))]
     EventHistoryModel("Cox",Formula(:.,:.),EventHistory.Surv,
                       vec(beta),cc,                      
                       iid,I,V,
@@ -95,7 +95,7 @@ function revcumsum(A,dim=1)
     D = size(A)
     n = D[dim]
     res = similar(A)
-    prev = 0;
+    prev = zeros(Float64,1,size(A,2));    
     for i=1:n
         idx = 
         prev += A[n-i+1,:];
