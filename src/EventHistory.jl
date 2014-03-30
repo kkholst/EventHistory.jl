@@ -12,7 +12,7 @@ module EventHistory
 
 using Distributions, DataFrames
 import Base.show
-import DataFrames: ModelFrame, ModelMatrix
+import DataFrames: ModelFrame, ModelMatrix, CoefTable, coefnames
 import StatsBase: coef, coeftable, confint, vcov, predict
 import Calculus: deparse
 using StatsBase: StatisticalModel, RegressionModel
@@ -22,7 +22,7 @@ type EventHistoryModel <: RegressionModel
     formula::Formula
     eventtype::DataType
     coef::Vector{Float64}
-    coefmat::DataFrame
+    coefmat::CoefTable
     IC::Matrix{Float64}
     invhess::Matrix{Float64}
     vcov::Matrix{Float64}

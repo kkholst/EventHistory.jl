@@ -43,7 +43,7 @@ Event([:start,:stop,:status],d)
 using EventHistory
 using RDatasets
 ovarian = dataset("survival", "ovarian");
-ovarian[:Group] = ovarian[:Rx]-1;
+ovarian[:Group] = ovarian[:Rx].-1;
 ovarian[:S] = Event([:FUTime,:FUStat],ovarian);
 
 mm = phreg(S~Age+Group,ovarian);

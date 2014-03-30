@@ -14,8 +14,10 @@ function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector, id=[]; beta=
     V =  iid'iid
     coefmat = [beta sqrt(diag(V)) sqrt(diag(I))]
     coefmat = [coefmat 2*Distributions.cdf(Distributions.Normal(0,1),-abs(coefmat[:,1]./coefmat[:,2]))]
-    coln = [:Estimate,:SE,:naiveSE,symbol("pvalue")]
-    cc = convert(DataFrame,coefmat); names!(cc,coln);
+    ## coln = [:Estimate,:SE,:naiveSE,symbol("pvalue")]
+    ## cc = convert(DataFrame,coefmat); names!(cc,coln);
+    cc = CoefTable(coefmat,["Estimate","S.E","naive S.E.","P-value"],
+                   repeat([""],inner=[size(coefmat,1)]))
     chaz = [pre["jumps"] pre["time"][pre["jumps"]] cumsum(1./(U[4][pre["jumps"]]))]
     EventHistoryModel("Cox",Formula(:.,:.),EventHistory.Surv,
                       vec(beta),cc,                      
@@ -33,9 +35,11 @@ function phreg(formula::Formula, data::DataFrame; id=[], opt...)
     time = EventHistory.Time(S)
     status = EventHistory.Status(S)
     entry = try EventHistory.Entry(S) catch [] end
-    X = ModelMatrix(M)
+    X = ModelMatrix(M)    
     X = X.m[:,[2:size(X.m,2)]];
     res = EventHistory.phreg(X, time, status, entry; opt...)
+    cnames = setdiff(coefnames(M),["(Intercept)"])
+    res.coefmat.rownms=cnames
     res.formula = formula
     res.eventtype = typeof(S[1])
     res
