@@ -1,15 +1,15 @@
 language: julia
 os:
-	- linux
+    - linux
 julia:
-	- release
-	- nightly
+    - release
+    - nightly
 notifications:
-	email: false
+    email: false
 sudo: false
 script:
-	- if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-	- julia -e 'Pkg.clone(pwd()); Pkg.build("EventHistory")'
+    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+    - julia -e 'Pkg.clone(pwd()); Pkg.build("EventHistory")'
 #	- julia -e 'Pkg.test("GLM", coverage=true)'
 # after_success:
 #	- julia -e 'cd(Pkg.dir("EventHistory")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
