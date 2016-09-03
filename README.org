@@ -4,7 +4,12 @@
 #+PROPERTY: session *julia*
 #+PROPERTY: tangle yes
 
+#+BEGIN_HTML
+<a href="https://travis-ci.org/kkholst/EventHistory.jl"><img src="https://travis-ci.org/kkholst/EventHistory.jl.svg?branch=master"></a>
+#+END_HTML
+
 * Event History Analysis
+
 /Event History Analysis for the Julia Language/
 
 #+BEGIN_SRC julia :exports code
