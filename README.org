@@ -23,7 +23,7 @@
 ** Event class
 
 *** Right-censored event times
-#+BEGIN_SRC julai
+#+BEGIN_SRC julia :exports both
   stop   = [2,3,3];
   status = [false,true,true];
   e1 = Event(stop,status)
