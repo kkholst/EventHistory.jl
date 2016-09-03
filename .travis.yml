@@ -12,4 +12,4 @@ script:
     - julia -e 'Pkg.clone(pwd()); Pkg.build("EventHistory")'
     - julia -e 'Pkg.test("EventHistory", coverage=true)'
 after_success:
-    - julia -e 'cd(Pkg.dir("EventHistory")); Pkg.add("Coverage"); using Coverage; CodeCov.submit(process_folder())'
+    - julia -e 'cd(Pkg.dir("EventHistory")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'

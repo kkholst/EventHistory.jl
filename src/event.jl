@@ -120,7 +120,8 @@ function Event(time::Union{Vector,DataFrames.DataVector},
     Event(time,status,string(method))
 end
 
-function Event(time::Union{Vector,DataFrames.DataVector},status::Union{Vector,DataFrames.DataVector},
+function Event(time::Union{Vector,DataFrames.DataVector},
+               status::Union{Vector,DataFrames.DataVector},
                method::AbstractString="comprisk")
     n = size(time,1)
     if lowercase(method)=="interval"

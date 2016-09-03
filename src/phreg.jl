@@ -178,7 +178,7 @@ function predict(mm::EventHistory.EventHistoryModel; X=[]'::Matrix,time=mm.event
         H = exp(X*coef(mm))
         res = L0.*H
     else
-        res = Array(Float64,size(time,1),size(X,1))
+        res = Array(Any,size(time,1),size(X,1))
         for i=1:size(X,1)
             res[:,i] = L0.*exp(X[i,:]*coef(mm))
         end
