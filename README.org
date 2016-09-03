@@ -6,6 +6,7 @@
 
 #+BEGIN_HTML
 <a href="https://travis-ci.org/kkholst/EventHistory.jl"><img src="https://travis-ci.org/kkholst/EventHistory.jl.svg?branch=master"></a>
+<a href="https://codecov.io/github/kkholst/EventHistory.jl?branch=master"><img src="https://codecov.io/github/kkholst/EventHistory.jl/coverage.svg?branch=master"></a>
 #+END_HTML
 
 * Event History Analysis
