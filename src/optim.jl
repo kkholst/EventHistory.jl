@@ -2,7 +2,7 @@ type D2Function
     value::Float64
     gradient::Array{Float64,1}
     hessian::Array{Float64,2}
-end 
+end
 
 
 ###{{{ Newton-Raphson
@@ -49,4 +49,4 @@ function NR(f, x; iter=200,tol=1e-12,verbose=false,method=0,gamma=1,trace=0)
 end
 
 ###}}} Newton-Raphson
-    
+

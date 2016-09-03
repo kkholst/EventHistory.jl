@@ -1,13 +1,13 @@
 ###{{{ phreg
 
 function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector, id=[]; beta=[], opt...)
-    pre = EventHistory.coxprep(t,status,X,entry,id);
+    pre = EventHistory.coxprep(t,status,X,entry,id)
     p = size(X,2)
     if size(beta,1)==0 beta=vec(zeros(p,1)) end
     pl(beta,indiv=false) =
         EventHistory.coxPL(beta,pre["X"],pre["XX"],pre["sign"],pre["jumps"],indiv)
     val = EventHistory.NR(pl,beta; opt...)
-    beta = vec(val[1]); grad = val[2].gradient; steps = val[3]; 
+    beta = vec(val[1]); grad = val[2].gradient; steps = val[3];
     U = pl(beta,true)
     I = -pinv(U[3])
     iid = U[2]*I
@@ -20,7 +20,7 @@ function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector, id=[]; beta=
                    repeat([""],inner=[size(coefmat,1)]))
     chaz = [pre["jumps"] pre["time"][pre["jumps"]] cumsum(1./(U[4][pre["jumps"]]))]
     EventHistoryModel("Cox",Formula(:.,:.),EventHistory.Surv,
-                      vec(beta),cc,                      
+                      vec(beta),cc,
                       iid,I,V,
                       [steps],vec(grad),X,[t status],
                       chaz
@@ -30,13 +30,13 @@ end
 
 function phreg(formula::Formula, data::DataFrame; id=[], opt...)
     ## fm = DataFrames.Formula(formula.args[2],formula.args[3])
-    M = ModelFrame(formula,data);
+    M = ModelFrame(formula,data)
     S = M.df[:,1] ## convert(Vector,M.df[:,1])
     time = EventHistory.Time(S)
     status = EventHistory.Status(S)
     entry = try EventHistory.Entry(S) catch [] end
-    X = ModelMatrix(M)    
-    X = X.m[:,[2:size(X.m,2)]];
+    X = ModelMatrix(M)
+    X = X.m[:,collect(2:size(X.m,2))]
     res = EventHistory.phreg(X, time, status, entry; opt...)
     cnames = setdiff(coefnames(M),["(Intercept)"])
     res.coefmat.rownms=cnames
@@ -54,8 +54,8 @@ function coxprep(exit,status,X=[],entry=[],id=[])
     n = size(exit,1)
     p = size(X,2)
     truncation = size(entry,1)==n
-    XX = Array(Float64, n, p*p); ## Calculate XX' at each time-point
-    ##  XX = Array(Float64, p, p, n);
+    XX = Array(Float64, n, p*p) ## Calculate XX' at each time-point
+    ##  XX = Array(Float64, p, p, n)
     if size(X,1)>0
         for i=1:n
             Xi = X[i,:]
@@ -74,7 +74,7 @@ function coxprep(exit,status,X=[],entry=[],id=[])
         exit = [entry;exit]
         X = [X;X]
         XX = [XX;XX]
-    end    
+    end
     ord0 = sortperm(status*1,rev=true)
     ord = sortperm(exit[ord0])
     ord = ord0[ord]
@@ -83,13 +83,13 @@ function coxprep(exit,status,X=[],entry=[],id=[])
     end
     if size(X,1)>0
         X = X[ord,:]
-        XX = XX[ord,:]        
+        XX = XX[ord,:]
     end
     exit = exit[ord]
     status = status[ord]
     jumps = find(status)
-    ["X"=>X, "XX"=>XX, "jumps"=>jumps, "sign"=>sgn,
-     "ord"=>ord, "time"=>exit, "id"=>[]]
+    Dict("X"=>X, "XX"=>XX, "jumps"=>jumps, "sign"=>sgn,
+     "ord"=>ord, "time"=>exit, "id"=>[])
 end
 
 ###}}} coxprep
@@ -99,11 +99,11 @@ function revcumsum(A,dim=1)
     D = size(A)
     n = D[dim]
     res = similar(A)
-    prev = zeros(Float64,1,size(A,2));    
+    prev = zeros(Float64,1,size(A,2))
     for i=1:n
-        idx = 
-        prev += A[n-i+1,:];
-        res[n-i+1,:] = prev;
+        idx =
+        prev += A[n-i+1,:]
+        res[n-i+1,:] = prev
     end
     res
 end
@@ -111,44 +111,44 @@ end
 
 ###{{{ coxPL
 function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector, indiv=false)
-    n = size(X,1);
-    p = size(X,2);
-    Xb = X*beta;
-    eXb = map(exp,Xb);
+    n = size(X,1)
+    p = size(X,2)
+    Xb = X*beta
+    eXb = map(exp,Xb)
     if size(sgn,1)==n ## Truncation
-        eXb = sgn.*eXb;
+        eXb = sgn.*eXb
     end
-    S0 = revcumsum(eXb);
-    E = similar(X);
-    D2 = similar(XX)    
+    S0 = revcumsum(eXb)
+    E = similar(X)
+    D2 = similar(XX)
     S1 = Array(Float64,n,p)
     S2 = similar(XX)
     for j=1:p
         if (indiv) S1[:,j] = revcumsum(X[:,j].*eXb); end
-        E[:,j] = revcumsum(X[:,j].*eXb)./S0; ## S1/S0(s)
-    end;
+        E[:,j] = revcumsum(X[:,j].*eXb)./S0 ## S1/S0(s)
+    end
     for j=1:size(XX,2)
         if (indiv) S2[:,j] = revcumsum(XX[:,j].*eXb); end
         D2[:,j] = revcumsum(XX[:,j].* eXb)./S0 ## int S2/S0(s)
-    end;
+    end
     D2 = D2[jumps,:]
     E = E[jumps,:]
-    grad = (X[jumps,:]-E); ## Score
-    val = Xb[jumps]-log(S0[jumps]); ## Partial log-likelihood
-    hess = -(reshape(sum(D2,1),p,p)-E'E);
+    grad = (X[jumps,:]-E) ## Score
+    val = Xb[jumps]-log(S0[jumps]) ## Partial log-likelihood
+    hess = -(reshape(sum(D2,1),p,p)-E'E)
     if indiv
         return(val,grad,hess,vec(S0),S1,S2,E)
-    end        
-    val = sum(val); grad = sum(grad,1)   
+    end
+    val = sum(val); grad = sum(grad,1)
     EventHistory.D2Function(val[1],vec(grad),hess)
 end
 
 ###}}} coxPL
 
 ###{{{ predict
-# compute the values of a step function, 
+# compute the values of a step function,
 # i.e. how many of the jumps are smaller or
-# equal to the eval points 
+# equal to the eval points
 function sindex(jump::Vector, eval::Vector)
     N = size(eval,1)
     n = size(jump,1)
@@ -169,7 +169,7 @@ function predict(mm::EventHistory.EventHistoryModel; X=[]'::Matrix,time=mm.event
     idx = sindex(mm.chaz[:,2],time[ord,1])
     L0 = mm.chaz[:,3][idx]
     L0 = L0[sortperm(ord)]
-    arraytype = size(X,1)==1 
+    arraytype = size(X,1)==1
     if size(X,2)==0
         X = mm.X
         arraytype = true
@@ -177,7 +177,7 @@ function predict(mm::EventHistory.EventHistoryModel; X=[]'::Matrix,time=mm.event
     if arraytype
         H = exp(X*coef(mm))
         res = L0.*H
-    else 
+    else
         res = Array(Float64,size(time,1),size(X,1))
         for i=1:size(X,1)
             res[:,i] = L0.*exp(X[i,:]*coef(mm))

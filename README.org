@@ -13,10 +13,10 @@
 
 #+RESULTS:
 
-  
+
 ** Event class
 
-*** Right-censored event-time
+*** Right-censored event times
 #+BEGIN_SRC julai
   stop   = [2,3,3];
   status = [false,true,true];
@@ -26,7 +26,7 @@
 #+RESULTS:
 : 3-element Array{Surv,1}:
 :  2+
-:  3 
+:  3
 :  3
 
 
@@ -61,7 +61,7 @@ e2 = Event(start,stop,status)
 #+RESULTS:
 : 3-element Array{SurvTrunc,1}:
 :  (0;2+]
-:  (1;3] 
+:  (1;3]
 :  (2;3]
 
 
@@ -75,7 +75,7 @@ Entry(e2)
 :  1
 :  2
 
-*** Competing risks model
+*** Competing risks data
 #+BEGIN_SRC julia
 cause = [0,2,1];
 e3 = Event(start,stop,cause)
@@ -119,7 +119,7 @@ Cause(e3)
 
 #+RESULTS:
 : 3-element Array{SurvInt,1}:
-:  [1.0;2.0] 
+:  [1.0;2.0]
 :  (-Inf;3.0]
 :  [Time;Inf)
 
@@ -134,7 +134,7 @@ Event([:stop,:status],d)
 #+RESULTS:
 : 3-element Array{Surv,1}:
 :  2+
-:  3 
+:  3
 :  3
 
 
@@ -145,7 +145,7 @@ Event([:start,:stop,:status],d)
 #+RESULTS:
 : 3-element Array{SurvTrunc,1}:
 :  (0;2+]
-:  (1;3] 
+:  (1;3]
 :  (2;3]
 
 
@@ -179,6 +179,7 @@ Group  -0.803973  0.633937   0.632049   0.204718
 
 **** Prediction
 
+Predictions:
 #+BEGIN_SRC julia
 ## Prediction
 predict(mm,surv=false,X=[0 0]) ## Baseline
@@ -196,13 +197,14 @@ predict(mm,X=[56 1; 56 0],time=[600,100,400]) ## ... both groups
 #+END_EXAMPLE
 
 #+BEGIN_SRC julia
-s = predict(mm,X=[56 1; 56 0],order=true);
-pr = DataFrame(Time=[s[:,1],s[:,1]], S=[s[:,2],s[:,3]], Group=rep(["Group1","Group2"],each=size(s,1)));
+  s = predict(mm,X=[56 1; 56 0],order=true);
+  pr = DataFrame(Time=[s[:,1];s[:,1]], S=[s[:,2];s[:,3]], 
+		 Group=Compat.repeat(["Group1","Group2"],inner=size(s,1)));
 
-using Gadfly
-p = plot(pr, x="Time", y="S",color="Group",
-         Guide.ylabel("Survival probability"), Guide.title("Age 56"))        
-draw(PNG("surv.png",7inch,7inch),p)
+  using Gadfly
+  p = plot(pr, x="Time", y="S",color="Group",
+           Guide.ylabel("Survival probability"), Guide.title("Age 56"))
+  draw(PNG("surv.png",7inch,7inch),p)
 #+END_SRC
 
 [[file:examples/surv.png]]
@@ -231,7 +233,7 @@ x    -0.0211052 0.838301   0.795177 0.979914
 #+end_example
 
 
-** Installation 
+** Installation
 
 Get it from https://github.com/kkholst/EventHistory.jl
 
@@ -247,5 +249,5 @@ Pkg.clone("https://github.com/kkholst/EventHistory.jl")
 - Frailty models (Copula)
 - Residuals
 - ...
-  
-  
+
+

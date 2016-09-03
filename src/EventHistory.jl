@@ -18,7 +18,7 @@ import Calculus: deparse
 using StatsBase: StatisticalModel, RegressionModel
 
 type EventHistoryModel <: RegressionModel
-    model::String
+    model::AbstractString
     formula::Formula
     eventtype::DataType
     coef::Vector{Float64}

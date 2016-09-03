@@ -58,10 +58,10 @@ using Winston
 plot(s56[:,1],s56[:,2])
 
 s = predict(mm,X=[56 1; 56 0],order=true);
-pr = DataFrame(Time=[s[:,1],s[:,1]], S=[s[:,2],s[:,3]], Group=rep(["Group1","Group2"],each=size(s,1)));
+pr = DataFrame(Time=[s[:,1];s[:,1]], S=[s[:,2];s[:,3]], Group=rep(["Group1","Group2"],each=size(s,1)));
 
 using Gadfly
-p = plot(pr, x="Time", y="S",color="Group",
+p = plot(pr[,Time, x="Time", y="S",color="Group",
          Guide.ylabel("Survival probability"), Guide.title("Age 56"))        
 draw(PNG("surv.png",7inch,7inch),p)
 

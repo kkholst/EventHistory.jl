@@ -1,5 +1,5 @@
 ################################################################################
-## Type 'EventClass' for Event History objects 
+## Type 'EventClass' for Event History objects
 ## Subtypes:
 ##   Surv:      (Right)-censored survival outcome
 ##   SurvInt:   Interval-censored outcome (Left,Right,Interval)
@@ -28,7 +28,7 @@ end
 immutable SurvTrunc <: EventClass
     Entry::Number # Entry time
     Time::Number  # Exit time
-    Status::Bool  # Censoring status    
+    Status::Bool  # Censoring status
 end
 
 immutable CompRisk <: EventClass
@@ -45,7 +45,7 @@ immutable SurvInt <: EventClass
     Status::Int # Censoring (0:none,1:right,2:left,3:interval)
     function SurvInt(Time,Time2)
         if Time>Time2 error("time 1 larger than time 2") end
-        if (Time==Time2) 
+        if (Time==Time2)
             status = EventHistory.CensNot
         elseif Time2==Inf
             status = EventHistory.CensRight
@@ -75,7 +75,7 @@ end
 function show(io::IO, obj::SurvInt)
     if obj.Status==EventHistory.CensNot val=obj.Time
     elseif obj.Status==EventHistory.CensLeft val=string("(-Inf;",obj.Time2,"]")
-    elseif obj.Status==EventHistory.CensRight val=string("[",Time,";Inf)") 
+    elseif obj.Status==EventHistory.CensRight val=string("[",Time,";Inf)")
         else val = string("[",obj.Time,";",obj.Time2,"]"); end
     print(io,val)
 end
@@ -96,15 +96,15 @@ for key = (:Time, :Entry, :Status, :Cause)
         end
     end
 end
-      
+
 export Time,Entry,Status,Cause
 ###}}} Accessor
 
 ###{{{ Event constructor
 
-function Event(time::Union(Vector,DataFrames.DataVector),
-               status::Union(Vector{Bool},DataFrames.DataVector{Bool}))
-    n = size(time,1)    
+function Event(time::Union{Vector,DataFrames.DataVector},
+               status::Union{Vector{Bool},DataFrames.DataVector{Bool}})
+    n = size(time,1)
     E = Array(EventHistory.Surv,n)
     for i=1:n
         E[i] = EventHistory.Surv(time[i],status[i])
@@ -114,14 +114,14 @@ function Event(time::Union(Vector,DataFrames.DataVector),
 end
 
 
-function Event(time::Union(Vector,DataFrames.DataVector),
-               status::Union(Vector,DataFrames.DataVector),
+function Event(time::Union{Vector,DataFrames.DataVector},
+               status::Union{Vector,DataFrames.DataVector},
                method::Symbol=:comprisk)
     Event(time,status,string(method))
 end
 
-function Event(time::Union(Vector,DataFrames.DataVector),status::Union(Vector,DataFrames.DataVector),
-               method::String="comprisk")
+function Event(time::Union{Vector,DataFrames.DataVector},status::Union{Vector,DataFrames.DataVector},
+               method::AbstractString="comprisk")
     n = size(time,1)
     if lowercase(method)=="interval"
         E = Array(EventHistory.SurvInt,n)
@@ -129,7 +129,7 @@ function Event(time::Union(Vector,DataFrames.DataVector),status::Union(Vector,Da
             E[i] = EventHistory.SurvInt(time[i],status[i])
         end
         return E
-    end      
+    end
     E = Array(EventHistory.CompRisk,n)
     for i=1:n
         E[i] = EventHistory.CompRisk(0,time[i],status[i])
@@ -137,7 +137,7 @@ function Event(time::Union(Vector,DataFrames.DataVector),status::Union(Vector,Da
     E
 end
 
-function Event(entry::Union(Vector,DataFrames.DataVector), time::Union(Vector,DataFrames.DataVector), status::Union(Vector{Bool},DataFrames.DataVector{Bool}))
+function Event(entry::Union{Vector,DataFrames.DataVector}, time::Union{Vector,DataFrames.DataVector}, status::Union{Vector{Bool},DataFrames.DataVector{Bool}})
     n = size(time,1)
     E = Array(EventHistory.SurvTrunc,n)
     for i=1:n
@@ -146,7 +146,7 @@ function Event(entry::Union(Vector,DataFrames.DataVector), time::Union(Vector,Da
     E
 end
 
-function Event(entry::Union(Vector,DataFrames.DataVector), time::Union(Vector,DataFrames.DataVector), status::Union(Vector,DataFrames.DataVector))
+function Event(entry::Union{Vector,DataFrames.DataVector}, time::Union{Vector,DataFrames.DataVector}, status::Union{Vector,DataFrames.DataVector})
     n = size(time,1)
     E = Array(EventHistory.CompRisk,n)
     for i=1:n
