@@ -30,12 +30,12 @@ end
 
 function phreg(formula::Formula, data::DataFrame; id=[], opt...)
     ## fm = DataFrames.Formula(formula.args[2],formula.args[3])
-    M = ModelFrame(formula,data)
+    M = DataFrames.ModelFrame(formula,data)
     S = M.df[:,1] ## convert(Vector,M.df[:,1])
     time = EventHistory.Time(S)
     status = EventHistory.Status(S)
     entry = try EventHistory.Entry(S) catch [] end
-    X = ModelMatrix(M)
+    X = DataFrames.ModelMatrix(M)
     X = X.m[:,collect(2:size(X.m,2))]
     res = EventHistory.phreg(X, time, status, entry; opt...)
     cnames = setdiff(coefnames(M),["(Intercept)"])
@@ -54,12 +54,12 @@ function coxprep(exit,status,X=[],entry=[],id=[])
     n = size(exit,1)
     p = size(X,2)
     truncation = size(entry,1)==n
-    XX = Array(Float64, n, p*p) ## Calculate XX' at each time-point
-    ##  XX = Array(Float64, p, p, n)
+    XX = Array(Number, n, p*p) ## Calculate XX' at each time-point
+    ##  XX = Array(Number, p, p, n)
     if size(X,1)>0
         for i=1:n
-            Xi = X[i,:]
-            XX[i,:] = vec(Xi'Xi)
+            Xi = X[i,:]'
+            XX[i,:] = vec(Xi'*Xi)
             ## XX[:,:,i] = Xi'Xi
         end
     end
@@ -99,7 +99,7 @@ function revcumsum(A,dim=1)
     D = size(A)
     n = D[dim]
     res = similar(A)
-    prev = zeros(Float64,1,size(A,2))
+    prev = zeros(Number,1,size(A,2))
     for i=1:n
         idx =
         prev += A[n-i+1,:]
@@ -121,7 +121,7 @@ function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector, 
     S0 = revcumsum(eXb)
     E = similar(X)
     D2 = similar(XX)
-    S1 = Array(Float64,n,p)
+    S1 = Array(Number,n,p)
     S2 = similar(XX)
     for j=1:p
         if (indiv) S1[:,j] = revcumsum(X[:,j].*eXb); end
@@ -166,7 +166,7 @@ end
 ## Returns [time surv-prob]
 function predict(mm::EventHistory.EventHistoryModel; X=[]'::Matrix,time=mm.eventtime[:,1]::Vector,surv=true,order=false)
     ord = sortperm(time)
-    idx = sindex(mm.chaz[:,2],time[ord,1])
+    idx = EventHistory.sindex(mm.chaz[:,2],time[ord,1])
     L0 = mm.chaz[:,3][idx]
     L0 = L0[sortperm(ord)]
     arraytype = size(X,1)==1
@@ -178,13 +178,13 @@ function predict(mm::EventHistory.EventHistoryModel; X=[]'::Matrix,time=mm.event
         H = exp(X*coef(mm))
         res = L0.*H
     else
-        res = Array(Union{Float64,Int64,Bool},size(time,1),size(X,1))
+        res = Array(Number,size(time,1),size(X,1))
         for i=1:size(X,1)
-            res[:,i] = L0.*exp(X[i,:]*coef(mm))
+            res[:,i] = L0.*exp(X[i,:]'coef(mm))
         end
     end
     if surv res = exp(-res) end
-    res = [time res]
+    res = convert(Array{Number},[time res])
     if order
         return(res[sortperm(time),:])
     end

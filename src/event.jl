@@ -114,11 +114,11 @@ function Event(time::Union{Vector,DataFrames.DataVector},
 end
 
 
-function Event(time::Union{Vector,DataFrames.DataVector},
-               status::Union{Vector,DataFrames.DataVector},
-               method::Symbol=:comprisk)
-    Event(time,status,string(method))
-end
+# function Event(time::Union{Vector,DataFrames.DataVector},
+#                status::Union{Vector,DataFrames.DataVector},
+#                method::Symbol=:comprisk)
+#     Event(time,status,string(method))
+# end
 
 function Event(time::Union{Vector,DataFrames.DataVector},
                status::Union{Vector,DataFrames.DataVector},
@@ -164,9 +164,7 @@ function Event(var::Vector{Symbol}, data::DataFrame, censdef::Function=x->x.>0)
     else
         Status = data[var[3]]
     end
-    if typeof(censdef)==Function
-        Status = censdef(Status)
-    end
+    Status = censdef(Status)
     if p==2
         return Event(data[var[1]],Status)
     end
