@@ -12,8 +12,8 @@ function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector, id=[]; beta=
     I = -pinv(U[3])
     iid = U[2]*I
     V =  iid'iid
-    coefmat = [beta sqrt(diag(V)) sqrt(diag(I))]
-    coefmat = [coefmat 2*Distributions.cdf(Distributions.Normal(0,1),-abs(coefmat[:,1]./coefmat[:,2]))]
+    coefmat = [beta sqrt.(diag(V)) sqrt.(diag(I))]
+    coefmat = [coefmat 2*Distributions.cdf(Distributions.Normal(0,1),-abs.(coefmat[:,1]./coefmat[:,2]))]
     ## coln = [:Estimate,:SE,:naiveSE,symbol("pvalue")]
     ## cc = convert(DataFrame,coefmat); names!(cc,coln);
     cc = CoefTable(coefmat,["Estimate","S.E","naive S.E.","P-value"],
@@ -114,7 +114,7 @@ function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector, 
     n = size(X,1)
     p = size(X,2)
     Xb = X*beta
-    eXb = map(exp,Xb)
+    eXb = map(exp.,Xb)
     if size(sgn,1)==n ## Truncation
         eXb = sgn.*eXb
     end
@@ -134,7 +134,7 @@ function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector, 
     D2 = D2[jumps,:]
     E = E[jumps,:]
     grad = (X[jumps,:]-E) ## Score
-    val = Xb[jumps]-log(S0[jumps]) ## Partial log-likelihood
+    val = Xb[jumps]-log.(S0[jumps]) ## Partial log-likelihood
     hess = -(reshape(sum(D2,1),p,p)-E'E)
     if indiv
         return(val,grad,hess,vec(S0),S1,S2,E)
@@ -175,15 +175,15 @@ function predict(mm::EventHistory.EventHistoryModel; X=[]'::Matrix,time=mm.event
         arraytype = true
     end
     if arraytype
-        H = exp(X*coef(mm))
+        H = exp.(X*coef(mm))
         res = L0.*H
     else
         res = Array(Number,size(time,1),size(X,1))
         for i=1:size(X,1)
-            res[:,i] = L0.*exp(X[i,:]'coef(mm))
+            res[:,i] = L0.*exp.(X[i,:]'coef(mm))
         end
     end
-    if surv res = exp(-res) end
+    if surv res = exp.(-res) end
     res = convert(Array{Number},[time res])
     if order
         return(res[sortperm(time),:])

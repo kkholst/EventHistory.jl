@@ -63,8 +63,11 @@ plot(m2,col="red",add=TRUE)
 d <- data.frame(start=c(1,2,5,2,1,7,3,4,8,8),
                stop=c(2,3,6,7,8,9,9,9,14,17),
                event=c(1,1,1,1,1,1,1,0,0,0),
-               x=c(1,0,0,1,0,1,1,1,0,0))
+               x=c(1,0,0,1,0,1,1,1,0,0),
+               z=c(1.0,0,2.0,0,3.0,0,4.0,0,5.0,0))
 d$S <- with(d,Surv(start,stop,event))
-m <- coxph(S~x,data=d,robust=TRUE)
+(m1 <- coxph(S~x,data=d,robust=TRUE,ties="breslow"))
+(m2 <- coxph(S~x+z,data=d,robust=TRUE,ties="breslow"))
+(m2 <- coxph(S~x+z,data=d,robust=TRUE))
 
 survfit(m,newdata=data.frame(x=c(0,1),stop=5))$surv[3,]

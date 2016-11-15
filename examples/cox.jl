@@ -29,7 +29,7 @@ EventHistory.Cause(e3)
 ## Interval censoring
 right = [2,3,Inf];
 left  = [1,-Inf,1];
-e4    = EventHistory.Event(left,right,:interval)
+e4    = EventHistory.Event(left,right,"interval")
 
 ## Formula syntax (see also below)
 d = DataFrames.DataFrame(start=start,stop=stop,status=status);
@@ -70,11 +70,15 @@ draw(PNG("surv.png",7inch,7inch),p)
 ### Cox regression with left truncation
 ##################################################
 d = DataFrame(start=[1,2,5,2,1,7,3,4,8,8],
-              stop=[2,3,6,7,8,9,9,9,14,17],
+              stop=[2,3,6,7,8,9,9.5,10,14,17],
               event=[1,1,1,1,1,1,1,0,0,0],
-              x=[1,0,0,1,0,1,1,1,0,0]);
+              x=[1,0,0,1,0,1,1,1,0,0],
+              z=[1.0,0,2.0,0,3.0,0,4.0,0,5.0,0]
+              );
 d[:S] = EventHistory.Event([:start,:stop,:event],d);
 mm = EventHistory.phreg(S~x,d)
+
+mm = EventHistory.phreg(S~x+z,d)
 
 
 
