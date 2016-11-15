@@ -114,7 +114,7 @@ function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector, 
     n = size(X,1)
     p = size(X,2)
     Xb = X*beta
-    eXb = map(exp.,Xb)
+    eXb = map(exp,Xb)
     if size(sgn,1)==n ## Truncation
         eXb = sgn.*eXb
     end
