@@ -43,25 +43,26 @@ EventHistory.Event([:start,:stop,:status],d)
 using RDatasets
 ovarian = dataset("survival", "ovarian");
 ovarian[:Group] = ovarian[:Rx].-1;
-S = EventHistory.Event([:FUTime,:FUStat],ovarian);
-ovarian[:S] = EventHistory.Event([:FUTime,:FUStat],ovarian);
+S = EventHistory.Event([:FUTime,:FUStat], ovarian);
+ovarian[:S] = EventHistory.Event([:FUTime,:FUStat], ovarian);
 
-mm = EventHistory.phreg(S~Age+Group,ovarian)
+mm = EventHistory.phreg(@formula(S~Age+Group), ovarian)
 
 ## Prediction
-EventHistory.predict(mm,surv=false,X=[0 0]); ## Baseline
-s56 = EventHistory.predict(mm,X=[56 1],order=true); ## Survival probabilities age 40, group 1
-EventHistory.predict(mm,X=[56 0],time=[100,400,600]); ## ... at time 100,400,600
-EventHistory.predict(mm,X=[56 1; 56 0],time=[600,100,400]) ## ... both groups
+EventHistory.predict(mm, surv=false, X=[0 0]); ## Baseline
+s56 = EventHistory.predict(mm, X=[56 1], order=true); ## Survival probabilities age 40, group 1
+EventHistory.predict(mm, X=[56 0], time=[100,400,600]); ## ... at time 100,400,600
+EventHistory.predict(mm, X=[56 1; 56 0], time=[600,100,400]) ## ... both groups
 
 using Winston
-plot(s56[:,1],s56[:,2])
+plot(s56[:,1], s56[:,2])
 
-s = EventHistory.predict(mm,X=[56 1; 56 0],order=true)
-pr = DataFrame(Time=[s[:,1];s[:,1]], S=[s[:,2];s[:,3]], Group=rep(["Group1","Group2"],each=size(s,1)))
+s = EventHistory.predict(mm, X=[56 1; 56 0], order=true)
+pr = DataFrame(Time=[s[:,1];s[:,1]], S=[s[:,2];s[:,3]], Group=repeat(["Group1","Group2"], inner=size(s,1)))
 
 using Gadfly
-p = Gadfly.plot(pr, x="Time", y="S",color="Group",
+p = Gadfly.plot(pr, x="Time", y="S", color="Group",
+                Geom.step, Geom.point,
                 Guide.ylabel("Survival probability"), Guide.title("Age 56"))
 
 draw(PNG("surv.png",7inch,7inch),p)
@@ -73,12 +74,11 @@ d = DataFrame(start=[1,2,5,2,1,7,3,4,8,8],
               stop=[2,3,6,7,8,9,9.5,10,14,17],
               event=[1,1,1,1,1,1,1,0,0,0],
               x=[1,0,0,1,0,1,1,1,0,0],
-              z=[1.0,0,2.0,0,3.0,0,4.0,0,5.0,0]
-              );
-d[:S] = EventHistory.Event([:start,:stop,:event],d);
-mm = EventHistory.phreg(S~x,d)
+              z=[1.0,0,2.0,0,3.0,0,4.0,0,5.0,0]);
+d[:S] = EventHistory.Event([:start,:stop,:event], d);
+mm = EventHistory.phreg(@formula(S~x), d)
 
-mm = EventHistory.phreg(S~x+z,d)
+mm = EventHistory.phreg(@formula(S~x+z), d)
 
 
 

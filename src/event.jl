@@ -17,7 +17,7 @@ const CensInt = 3
 
 ###{{{ Types/classes: Surv,CompRisk,...
 
-abstract EventClass
+abstract type EventClass end
 #abstract EventInt <: EventClass
 
 immutable Surv <: EventClass
@@ -58,7 +58,9 @@ immutable SurvInt <: EventClass
     end
 end
 
-typealias Events Vector{EventClass}
+const Events = Vector{EventClass}
+const Vec = Union{Vector,Matrix,DataFrames.DataVector}
+const BoolVec = Union{Vector{Bool},Matrix{Bool},DataFrames.DataVector{Bool}}
 
 ###}}} Types
 
@@ -84,11 +86,11 @@ end
 ###{{{ Accessor
 # Meta-programming definitions of Time,Entry,Status,Cause access methods
 for key = (:Time, :Entry, :Status, :Cause)
-    for typ = (:Vector, :(DataFrames.DataVector))
+    for typ = (:Vector, :Matrix, :(DataFrames.DataVector))
         @eval function $(key){T<:EventClass}(e::$(typ){T})
             ##$(symbol(string("Event_",key)))(e)
-            n = size(e,1);
-            res = Array(typeof(e[1].$(key)),n)
+            n = length(e)
+            res = Array{typeof(e[1].$(key))}(n)
             for i=1:n
                 res[i] = e[i].$(key)
             end
@@ -100,12 +102,18 @@ end
 export Time,Entry,Status,Cause
 ###}}} Accessor
 
+
 ###{{{ Event constructor
 
-function Event(time::Union{Vector,DataFrames.DataVector},
-               status::Union{Vector{Bool},DataFrames.DataVector{Bool}})
-    n = size(time,1)
-    E = Array(EventHistory.Surv,n)
+function Event(time::Vec,
+               status::BoolVec)
+    n = length(time)
+    sz = size(time)
+    if (length(sz)==1)
+        E = Array{EventHistory.Surv}(n)
+    else
+        E = Array{EventHistory.Surv}(sz[1],sz[2])
+    end
     for i=1:n
         E[i] = EventHistory.Surv(time[i],status[i])
         ## E[i] = EventHistory.Surv(time[i],convert(Bool,status[i]))
@@ -113,43 +121,75 @@ function Event(time::Union{Vector,DataFrames.DataVector},
     E
 end
 
-
 # function Event(time::Union{Vector,DataFrames.DataVector},
 #                status::Union{Vector,DataFrames.DataVector},
 #                method::Symbol=:comprisk)
 #     Event(time,status,string(method))
 # end
 
-function Event(time::Union{Vector,DataFrames.DataVector},
-               status::Union{Vector,DataFrames.DataVector},
-               method::AbstractString="comprisk")
-    n = size(time,1)
+function Event(time::Vec,
+               status::Vec,
+               method::AbstractString)
+    n = length(time)
+    sz = size(time)
+    ## interval
     if lowercase(method)=="interval"
-        E = Array(EventHistory.SurvInt,n)
+        if (length(sz)==1)
+            E = Array{EventHistory.SurvInt}(n)
+        else
+            E = Array{EventHistory.SurvInt}(sz[1],sz[2])
+        end
         for i=1:n
             E[i] = EventHistory.SurvInt(time[i],status[i])
         end
         return E
     end
-    E = Array(EventHistory.CompRisk,n)
+    ## comprisk:
+    if (length(sz)==1)
+        E = Array{EventHistory.CompRisk}(n)
+    else
+        E = Array{EventHistory.CompRisk}(sz[1],sz[2])
+    end    
     for i=1:n
         E[i] = EventHistory.CompRisk(0,time[i],status[i])
     end
     E
 end
 
-function Event(entry::Union{Vector,DataFrames.DataVector}, time::Union{Vector,DataFrames.DataVector}, status::Union{Vector{Bool},DataFrames.DataVector{Bool}})
-    n = size(time,1)
-    E = Array(EventHistory.SurvTrunc,n)
+function Event(entry::Vec,
+               time::Vec,
+               status::BoolVec)
+    n = length(time)
+    sz = size(time)
+    if (length(sz)==1)
+        E = Array{EventHistory.SurvTrunc}(n)
+    else            
+        E = Array{EventHistory.SurvTrunc}(sz[1],sz[2])
+    end
     for i=1:n
         E[i] = EventHistory.SurvTrunc(entry[i],time[i],status[i])
     end
     E
 end
 
-function Event(entry::Union{Vector,DataFrames.DataVector}, time::Union{Vector,DataFrames.DataVector}, status::Union{Vector,DataFrames.DataVector})
-    n = size(time,1)
-    E = Array(EventHistory.CompRisk,n)
+function Event(entry::Vec,
+               time::Vec,
+               status::Vec)
+    n = length(time)
+    sz = size(time)
+    # issurv = typeof(status[1])==Bool
+    # if (issurv)
+    #     E = Array{EventHistory.SurvTrunc}(sz[1],sz[2])
+    #     for i=1:n
+    #         E[i] = EventHistory.SurvTrunc(entry[i],time[i],status[i])
+    #     end
+    #     return E
+    # end
+    if (length(sz)==1)
+        E = Array{EventHistory.CompRisk}(n)
+    else            
+        E = Array{EventHistory.CompRisk}(sz[1],sz[2])
+    end
     for i=1:n
         E[i] = EventHistory.CompRisk(entry[i],time[i],status[i])
     end
@@ -172,4 +212,10 @@ function Event(var::Vector{Symbol}, data::DataFrame, censdef::Function=x->x.>0)
 end
 
 ###}}} Event constructor
+
+
+# function transpose(x::EventHistory.EventClass)
+#     x
+# end
+# export transpose
 

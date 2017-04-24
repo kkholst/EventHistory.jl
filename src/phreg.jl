@@ -54,8 +54,8 @@ function coxprep(exit,status,X=[],entry=[],id=[])
     n = size(exit,1)
     p = size(X,2)
     truncation = size(entry,1)==n
-    XX = Array(Number, n, p*p) ## Calculate XX' at each time-point
-    ##  XX = Array(Number, p, p, n)
+    XX = Array{Real}(n, p*p) ## Calculate XX' at each time-point
+    ##  XX = Array{Real}(p, p, n)
     if size(X,1)>0
         for i=1:n
             Xi = X[i,:]'
@@ -65,7 +65,7 @@ function coxprep(exit,status,X=[],entry=[],id=[])
     end
     sgn=[]
     if truncation
-        sgn = Array(Int,2*n); fill!(sgn,1)
+        sgn = Array{Int}(2*n); fill!(sgn,1)
         status = [status;status]
         for i=1:n
             sgn[i] = -1
@@ -99,7 +99,7 @@ function revcumsum(A,dim=1)
     D = size(A)
     n = D[dim]
     res = similar(A)
-    prev = zeros(Number,1,size(A,2))
+    prev = zeros(Real,1,size(A,2))
     for i=1:n
         idx =
         prev += A[n-i+1,:]
@@ -121,7 +121,7 @@ function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector, 
     S0 = revcumsum(eXb)
     E = similar(X)
     D2 = similar(XX)
-    S1 = Array(Number,n,p)
+    S1 = Array{Real}(n,p)
     S2 = similar(XX)
     for j=1:p
         if (indiv) S1[:,j] = revcumsum(X[:,j].*eXb); end
@@ -152,7 +152,7 @@ end
 function sindex(jump::Vector, eval::Vector)
     N = size(eval,1)
     n = size(jump,1)
-    index = Array(Int64,N)
+    index = Array{Int64}(N)
     j = 1::Int64
     for t=1:N
         while (j<n) & (jump[j]<eval[t])
@@ -178,13 +178,13 @@ function predict(mm::EventHistory.EventHistoryModel; X=[]'::Matrix,time=mm.event
         H = exp.(X*coef(mm))
         res = L0.*H
     else
-        res = Array(Number,size(time,1),size(X,1))
+        res = Array{Real}(size(time,1),size(X,1))
         for i=1:size(X,1)
             res[:,i] = L0.*exp.(X[i,:]'coef(mm))
         end
     end
     if surv res = exp.(-res) end
-    res = convert(Array{Number},[time res])
+    res = convert(Array{Real},[time res])
     if order
         return(res[sortperm(time),:])
     end

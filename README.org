@@ -1,8 +1,8 @@
-#+PROPERTY: session *julia*
-#+PROPERTY: exports both
-#+PROPERTY: results output
-#+PROPERTY: session *julia*
-#+PROPERTY: tangle yes
+#+PROPERTY: header-args:julia :session *julia*
+#+PROPERTY: header-args  :eval never-export :exports both :results output :tangle yes :comments yes 
+#+PROPERTY: header-args:R+ :colnames yes :rownames no :hlines yes
+#+OPTIONS: timestamp:t title:t date:t author:t creator:nil toc:nil 
+#+OPTIONS: h:4 num:t tags:nil d:t ^:{}
 
 #+BEGIN_HTML
 <a href="https://travis-ci.org/kkholst/EventHistory.jl"><img src="https://travis-ci.org/kkholst/EventHistory.jl.svg?branch=master"></a>
@@ -18,7 +18,8 @@
 #+END_SRC
 
 #+RESULTS:
-
+: WARNING: Method definition function_module(Function) in module Base at reflection.jl:907 overwritten in module ESS at none:29.
+: ERROR: UndefVarError: ASCIIString not defined
 
 ** Event class
 
@@ -30,9 +31,9 @@
 #+END_SRC
 
 #+RESULTS:
-: 3-element Array{Surv,1}:
+: 3-element Array{EventHistory.Surv,1}:
 :  2+
-:  3
+:  3 
 :  3
 
 
@@ -65,9 +66,9 @@ e2 = Event(start,stop,status)
 #+END_SRC
 
 #+RESULTS:
-: 3-element Array{SurvTrunc,1}:
+: 3-element Array{EventHistory.SurvTrunc,1}:
 :  (0;2+]
-:  (1;3]
+:  (1;3] 
 :  (2;3]
 
 
@@ -88,7 +89,7 @@ e3 = Event(start,stop,cause)
 #+END_SRC
 
 #+RESULTS:
-: 3-element Array{CompRisk,1}:
+: 3-element Array{EventHistory.CompRisk,1}:
 :  (0;2:+]
 :  (1;3:2]
 :  (2;3:1]
@@ -124,10 +125,10 @@ Cause(e3)
 #+END_SRC
 
 #+RESULTS:
-: 3-element Array{SurvInt,1}:
-:  [1.0;2.0]
-:  (-Inf;3.0]
-:  [Time;Inf)
+: 3-element Array{EventHistory.SurvInt,1}:
+:  [1.0;2.0]              
+:  (-Inf;3.0]             
+:  [EventHistory.Time;Inf)
 
 
 *** Formula syntax (see also examples below)
@@ -138,9 +139,9 @@ Event([:stop,:status],d)
 #+END_SRC
 
 #+RESULTS:
-: 3-element Array{Surv,1}:
+: 3-element Array{EventHistory.Surv,1}:
 :  2+
-:  3
+:  3 
 :  3
 
 
@@ -149,11 +150,10 @@ Event([:start,:stop,:status],d)
 #+END_SRC
 
 #+RESULTS:
-: 3-element Array{SurvTrunc,1}:
+: 3-element Array{EventHistory.SurvTrunc,1}:
 :  (0;2+]
-:  (1;3]
+:  (1;3] 
 :  (2;3]
-
 
 ** Cox regression
 
@@ -169,7 +169,7 @@ ovarian = dataset("survival", "ovarian");
 ovarian[:Group] = ovarian[:Rx].-1;
 ovarian[:S] = Event([:FUTime,:FUStat],ovarian);
 
-mm = phreg(S~Age+Group,ovarian)
+mm = phreg(@formula(S~Age+Group),ovarian)
 #+END_SRC
 
 #+RESULTS:
@@ -188,27 +188,26 @@ Group  -0.803973  0.633937   0.632049   0.204718
 Predictions:
 #+BEGIN_SRC julia :exports both
 ## Prediction
-predict(mm,surv=false,X=[0 0]) ## Baseline
-s56 = predict(mm,X=[56 1],order=true) ## Survival probabilities age 40, group 1
-predict(mm,X=[56 0],time=[100,400,600]) ## ... at time 100,400,600
+predict(mm,surv=false,X=[0 0]); ## Baseline
+s56 = predict(mm,X=[56 1],order=true); ## Survival probabilities age 40, group 1
+predict(mm,X=[56 0],time=[100,400,600]); ## ... at time 100,400,600
 predict(mm,X=[56 1; 56 0],time=[600,100,400]) ## ... both groups
 #+END_SRC
 
 #+RESULTS:
-#+BEGIN_EXAMPLE
-3x3 Array{Float64,2}:
- 600.0  0.618402  0.341676
- 100.0  0.983831  0.964233
- 400.0  0.834936  0.668255
-#+END_EXAMPLE
+: 3×3 Array{Real,2}:
+:  600.0  0.618402  0.341676
+:  100.0  0.983831  0.964233
+:  400.0  0.834936  0.668255
 
 #+BEGIN_SRC julia :exports both
-  s = predict(mm,X=[56 1; 56 0],order=true);
+  s = predict(mm,X=[56 1; 56 0], order=true);
   pr = DataFrame(Time=[s[:,1];s[:,1]], S=[s[:,2];s[:,3]], 
-		 Group=Compat.repeat(["Group1","Group2"],inner=size(s,1)));
+		 Group=Compat.repeat(["Group1","Group2"], inner=size(s,1)));
 
   using Gadfly
   p = plot(pr, x="Time", y="S",color="Group",
+           Geom.step, Geom.point,
            Guide.ylabel("Survival probability"), Guide.title("Age 56"))
   draw(PNG("surv.png",7inch,7inch),p)
 #+END_SRC
@@ -223,9 +222,9 @@ d = DataFrame(start=[1,2,5,2,1,7,3,4,8,8],
                 stop=[2,3,6,7,8,9,9,9,14,17],
                 event=[1,1,1,1,1,1,1,0,0,0],
                 x=[1,0,0,1,0,1,1,1,0,0]);
-d[:S] = Event([:start,:stop,:event],d);
+d[:S] = Event([:start,:stop,:event], d);
 
-e = phreg(S~x,d)
+e = phreg(@formula(S~x), d)
 #+END_SRC
 
 #+RESULTS:
@@ -237,7 +236,6 @@ n=10, events=7
        Estimate      S.E naive S.E.  P-value
 x    -0.0211052 0.838301   0.795177 0.979914
 #+end_example
-
 
 ** Installation
 
