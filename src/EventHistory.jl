@@ -1,9 +1,9 @@
 # EventHistory.jl
 # Event History Analysis in Julia
 #
-# Copyright (C) 2013   Klaus K. Holst
+# Copyright (C) 2013-2017   Klaus K. Holst
 #
-# Authors: Klaus Kähler Holst <kkho@biostat.ku.dk>
+# Authors: Klaus Kähler Holst <klaus@holst.it>
 # Keywords: event history analysis, survival analysis,
 #           cox regression, competing risks models
 ##################################################
@@ -16,6 +16,8 @@ import DataFrames: ModelFrame, ModelMatrix, CoefTable, coefnames
 import StatsBase: coef, coeftable, confint, vcov, predict
 import Calculus: deparse
 using StatsBase: StatisticalModel, RegressionModel
+using Compat
+import Compat.String
 
 type EventHistoryModel <: RegressionModel
     model::AbstractString

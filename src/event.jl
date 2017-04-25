@@ -17,7 +17,7 @@ const CensInt = 3
 
 ###{{{ Types/classes: Surv,CompRisk,...
 
-abstract type EventClass end
+@compat abstract type EventClass end
 #abstract EventInt <: EventClass
 
 immutable Surv <: EventClass
