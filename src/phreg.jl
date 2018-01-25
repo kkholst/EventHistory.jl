@@ -1,11 +1,14 @@
 ###{{{ phreg
 
-function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector, id=[]; beta=[], opt...)
-    pre = EventHistory.coxprep(t,status,X,entry,id)
+function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector,
+               offset=[], weights=[], id=[]; beta=[], opt...)
+    pre = EventHistory.coxprep(t,status,X,entry,id=id,weight=weights,offset=offset)
     p = size(X,2)
     if size(beta,1)==0 beta=vec(zeros(p,1)) end
     pl(beta,indiv=false) =
-        EventHistory.coxPL(beta,pre["X"],pre["XX"],pre["sign"],pre["jumps"],indiv)
+        EventHistory.coxPL(beta,pre["X"],pre["XX"],pre["sign"],pre["jumps"],
+                           weights=pre["weights"], offset=pre["offset"],
+                           indiv=indiv)
     val = EventHistory.NR(pl,beta; opt...)
     beta = vec(val[1]); grad = val[2].gradient; steps = val[3];
     U = pl(beta,true)
@@ -13,13 +16,13 @@ function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector, id=[]; beta=
     iid = U[2]*I
     V =  iid'iid
     coefmat = [beta sqrt.(diag(V)) sqrt.(diag(I))]
-    coefmat = [coefmat 2*Distributions.cdf(Distributions.Normal(0,1),-abs.(coefmat[:,1]./coefmat[:,2]))]
-    ## coln = [:Estimate,:SE,:naiveSE,symbol("pvalue")]
-    ## cc = convert(DataFrame,coefmat); names!(cc,coln);
+    coefmat = [coefmat 2*Distributions.cdf.(Distributions.Normal(0,1),-abs.(coefmat[:,1]./coefmat[:,2]))]
     cc = CoefTable(coefmat,["Estimate","S.E","naive S.E.","P-value"],
                    repeat([""],inner=[size(coefmat,1)]))
     chaz = [pre["jumps"] pre["time"][pre["jumps"]] cumsum(1./(U[4][pre["jumps"]]))]
-    EventHistoryModel("Cox",Formula(:.,:.),EventHistory.Surv,
+    EventHistoryModel("Cox",
+                      Formula(:.,:.),
+                      EventHistory.Surv,
                       vec(beta),cc,
                       iid,I,V,
                       [steps],vec(grad),X,[t status],
@@ -28,14 +31,14 @@ function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector, id=[]; beta=
 end
 
 
-function phreg(formula::Formula, data::DataFrame; id=[], opt...)
-    ## fm = DataFrames.Formula(formula.args[2],formula.args[3])
-    M = DataFrames.ModelFrame(formula,data)
+function phreg(formula::Formula, data::DataFrame;
+               opt...)
+    M = StatsModels.ModelFrame(formula,data)
     S = M.df[:,1] ## convert(Vector,M.df[:,1])
     time = EventHistory.Time(S)
     status = EventHistory.Status(S)
     entry = try EventHistory.Entry(S) catch [] end
-    X = DataFrames.ModelMatrix(M)
+    X = StatsModels.ModelMatrix(M)
     X = X.m[:,collect(2:size(X.m,2))]
     res = EventHistory.phreg(X, time, status, entry; opt...)
     cnames = setdiff(coefnames(M),["(Intercept)"])
@@ -49,11 +52,11 @@ end
 
 ###{{{ coxprep
 
-function coxprep(exit,status,X=[],entry=[],id=[])
+function coxprep(exit,status,X=[],entry=[]; id=[], weights=[], offset=[])
     Truncation = size(entry,1)==size(exit,1)
     n = size(exit,1)
     p = size(X,2)
-    truncation = size(entry,1)==n
+    truncation = size(entry,1)==n    
     XX = Array{Real}(n, p*p) ## Calculate XX' at each time-point
     ##  XX = Array{Real}(p, p, n)
     if size(X,1)>0
@@ -74,6 +77,12 @@ function coxprep(exit,status,X=[],entry=[],id=[])
         exit = [entry;exit]
         X = [X;X]
         XX = [XX;XX]
+        if length(weights)>1
+            weights = [weights;weights];
+        end
+        if length(offset)>1
+            offset = [offset;offset];
+        end
     end
     ord0 = sortperm(status*1,rev=true)
     ord = sortperm(exit[ord0])
@@ -81,6 +90,12 @@ function coxprep(exit,status,X=[],entry=[],id=[])
     if (truncation)
         sgn = sgn[ord]
     end
+    if length(weights)>1
+        weights = weights[ord]
+    end
+    if length(offset)>1
+        offset = offset[ord]
+    end    
     if size(X,1)>0
         X = X[ord,:]
         XX = XX[ord,:]
@@ -89,7 +104,7 @@ function coxprep(exit,status,X=[],entry=[],id=[])
     status = status[ord]
     jumps = find(status)
     Dict("X"=>X, "XX"=>XX, "jumps"=>jumps, "sign"=>sgn,
-     "ord"=>ord, "time"=>exit, "id"=>[])
+     "ord"=>ord, "time"=>exit, "id"=>[], "weights"=>weights, "offset"=>offset)
 end
 
 ###}}} coxprep
@@ -110,13 +125,24 @@ end
 ###}}} revcumsum
 
 ###{{{ coxPL
-function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector, indiv=false)
+function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector;
+               weights=[], offset=[],
+               indiv=false)
     n = size(X,1)
-    p = size(X,2)
+    p = size(X,2)   
     Xb = X*beta
+    if (length(offset)>1)
+        Xb += offset
+    end    
     eXb = map(exp,Xb)
+    if length(offset)>0
+        eXb += offset
+    end
     if size(sgn,1)==n ## Truncation
-        eXb = sgn.*eXb
+        eXb .*= sgn.*eXb
+    end
+    if length(weights)>0
+        eXb .*= weights
     end
     S0 = revcumsum(eXb)
     E = similar(X)
@@ -135,6 +161,9 @@ function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector, 
     E = E[jumps,:]
     grad = (X[jumps,:]-E) ## Score
     val = Xb[jumps]-log.(S0[jumps]) ## Partial log-likelihood
+    if length(weights)>0
+        val .*= weights[jumps]
+    end
     hess = -(reshape(sum(D2,1),p,p)-E'E)
     if indiv
         return(val,grad,hess,vec(S0),S1,S2,E)
@@ -203,5 +232,5 @@ end
 
 function coeftable(mm::EventHistoryModel)
     mm.coefmat
-
 end
+

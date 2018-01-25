@@ -1,20 +1,21 @@
-# EventHistory.jl
-# Event History Analysis in Julia
-#
-# Copyright (C) 2013-2017   Klaus K. Holst
-#
-# Authors: Klaus Kähler Holst <klaus@holst.it>
-# Keywords: event history analysis, survival analysis,
-#           cox regression, competing risks models
-##################################################
+#=
+ EventHistory.jl
+ Event History Analysis in Julia
+
+ Copyright (C) 2013-2018   Klaus K. Holst
+
+ Authors: Klaus Kähler Holst <klaus@holst.it>
+ Keywords: event history analysis, survival analysis,
+           cox regression, competing risks models
+=#
 
 module EventHistory
 
-using Distributions, DataFrames
+using Distributions, DataFrames, StatsModels
 import Base.show
-import DataFrames: ModelFrame, ModelMatrix, CoefTable, coefnames
-import StatsBase: coef, coeftable, confint, vcov, predict
+import StatsBase: coef, coeftable, CoefTable, coefnames, confint, vcov, predict
 import Calculus: deparse
+import StatsModels: Formula, ModelFrame, ModelMatrix
 using StatsBase: StatisticalModel, RegressionModel
 using Compat
 import Compat.String
@@ -53,6 +54,6 @@ include("phreg.jl") ## Cox Proportional Hazards Model
 #include("aalen.jl") ## Aalens Additive Model
 include("optim.jl") ## Optimization routines
 
-export phreg, Event, predict ## lifetable, aalen
+export phreg, Event, predict, coef, vcov, coeftable ## lifetable, aalen
 
 end # module

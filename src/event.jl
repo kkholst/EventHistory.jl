@@ -1,21 +1,23 @@
-################################################################################
-## Type 'EventClass' for Event History objects
-## Subtypes:
-##   Surv:      (Right)-censored survival outcome
-##   SurvInt:   Interval-censored outcome (Left,Right,Interval)
-##   SurvTrunc: Right-censoring + left-truncation
-##   CompRisk:  Competing risks model
-##
-## constructor: Event
-## Access methods: Time, Status, Cause, ...
-################################################################################
+#=
+Type 'EventClass' for Event History objects
+Subtypes:
+Surv:      (Right)-censored survival outcome
+SurvInt:   Interval-censored outcome (Left,Right,Interval)
+SurvTrunc: Right-censoring + left-truncation
+CompRisk:  Competing risks model
+
+constructor: Event
+Access methods: Time, Status, Cause, ...
+=#
 
 const CensNot = 0
 const CensLeft = 1
 const CensRight = 2
 const CensInt = 3
 
-###{{{ Types/classes: Surv,CompRisk,...
+#=
+Types/classes: Surv,CompRisk,...
+=#
 
 @compat abstract type EventClass end
 #abstract EventInt <: EventClass
@@ -42,7 +44,7 @@ end
 immutable SurvInt <: EventClass
     Time::Number     # Time 1
     Time2::Number    # Interval [Time;Time2]. Use Inf/-Inf for left/right censoring
-    Status::Int # Censoring (0:none,1:right,2:left,3:interval)
+    Status::Int      # Censoring (0:none,1:right,2:left,3:interval)
     function SurvInt(Time,Time2)
         if Time>Time2 error("time 1 larger than time 2") end
         if (Time==Time2)
@@ -59,34 +61,42 @@ immutable SurvInt <: EventClass
 end
 
 const Events = Vector{EventClass}
-const Vec = Union{Vector,Matrix,DataFrames.DataVector}
-const BoolVec = Union{Vector{Bool},Matrix{Bool},DataFrames.DataVector{Bool}}
+const Vec = Union{Vector,Matrix} 
+const BoolVec = Union{Vector{Bool},Matrix{Bool},BitVector}
 
-###}}} Types
 
-###{{{ show methods
+#=
+show methods
+=#
+
 function show(io::IO, obj::EventClass)
     print(io, obj.Time, obj.Status>0 ? "":"+")
 end
+
 function show(io::IO, obj::SurvTrunc)
     print(io, "(", obj.Entry, ";", obj.Time, obj.Status>0 ? "":"+","]")
 end
+
 function show(io::IO, obj::CompRisk)
     print(io, "(", obj.Entry, ";", obj.Time, ":", obj.Status==0 ? "+" : obj.Cause,"]")
 end
+
 function show(io::IO, obj::SurvInt)
     if obj.Status==EventHistory.CensNot val=obj.Time
     elseif obj.Status==EventHistory.CensLeft val=string("(-Inf;",obj.Time2,"]")
     elseif obj.Status==EventHistory.CensRight val=string("[",Time,";Inf)")
-        else val = string("[",obj.Time,";",obj.Time2,"]"); end
+    else val = string("[",obj.Time,";",obj.Time2,"]"); end
     print(io,val)
 end
-###}}} show methods
 
-###{{{ Accessor
+
+#=
+Accessors
+=#
+
 # Meta-programming definitions of Time,Entry,Status,Cause access methods
 for key = (:Time, :Entry, :Status, :Cause)
-    for typ = (:Vector, :Matrix, :(DataFrames.DataVector))
+    for typ = (:Vector, :Matrix) #, :(DataFrames.DataVector))
         @eval function $(key){T<:EventClass}(e::$(typ){T})
             ##$(symbol(string("Event_",key)))(e)
             n = length(e)
@@ -100,10 +110,11 @@ for key = (:Time, :Entry, :Status, :Cause)
 end
 
 export Time,Entry,Status,Cause
-###}}} Accessor
 
 
-###{{{ Event constructor
+#=
+Event constructor
+=#
 
 function Event(time::Vec,
                status::BoolVec)
@@ -211,8 +222,10 @@ function Event(var::Vector{Symbol}, data::DataFrame, censdef::Function=x->x.>0)
     return Event(data[var[1]],data[var[2]],Status)
 end
 
-###}}} Event constructor
 
+#=
+Misc
+=#
 
 # function transpose(x::EventHistory.EventClass)
 #     x
