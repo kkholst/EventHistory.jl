@@ -54,6 +54,17 @@ include("phreg.jl") ## Cox Proportional Hazards Model
 #include("aalen.jl") ## Aalens Additive Model
 include("optim.jl") ## Optimization routines
 
-export phreg, Event, predict, coef, vcov, coeftable ## lifetable, aalen
+function Time(T::Any)
+    n = length(T)
+    res = Array{Float64}(n)
+    for i=1:n
+        res[i] = T[i].Time
+    end
+    return res    
+end
+
+export phreg, Event, predict, coef, vcov, coeftable,
+    Time, Status, Cause, Entry
+    ## lifetable, aalen
 
 end # module

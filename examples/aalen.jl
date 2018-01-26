@@ -29,3 +29,7 @@ function aalen(X, t, status; entry=[], id=[], beta=[], opt...)
     
 end
 
+dd = CSV.read("/data/surv.csv");
+dd[:S] = Event([:entry,:exit,:status], dd);
+
+

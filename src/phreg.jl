@@ -1,8 +1,9 @@
 ###{{{ phreg
 
-function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector,
-               offset=[], weights=[], id=[]; beta=[], opt...)
-    pre = EventHistory.coxprep(t,status,X,entry,id=id,weight=weights,offset=offset)
+function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector;
+               offset=[], weights=[], id=[], beta=[], opt...)
+    pre = EventHistory.coxprep(t,status,X,entry,
+                               id=id,weights=weights,offset=offset)
     p = size(X,2)
     if size(beta,1)==0 beta=vec(zeros(p,1)) end
     pl(beta,indiv=false) =
@@ -142,7 +143,7 @@ function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector;
         eXb .*= sgn.*eXb
     end
     if length(weights)>0
-        eXb .*= weights
+        # eXb .*= weights
     end
     S0 = revcumsum(eXb)
     E = similar(X)
@@ -162,7 +163,7 @@ function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector;
     grad = (X[jumps,:]-E) ## Score
     val = Xb[jumps]-log.(S0[jumps]) ## Partial log-likelihood
     if length(weights)>0
-        val .*= weights[jumps]
+        #val .*= weights[jumps]        
     end
     hess = -(reshape(sum(D2,1),p,p)-E'E)
     if indiv

@@ -1,4 +1,6 @@
 import EventHistory
+using DataFrames
+using StatsModels
 ##reload("EventHistory")
 
 ##################################################

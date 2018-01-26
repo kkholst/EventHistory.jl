@@ -69,23 +69,25 @@ const BoolVec = Union{Vector{Bool},Matrix{Bool},BitVector}
 show methods
 =#
 
+const ndigits = 2
+
 function show(io::IO, obj::EventClass)
     print(io, obj.Time, obj.Status>0 ? "":"+")
 end
 
 function show(io::IO, obj::SurvTrunc)
-    print(io, "(", obj.Entry, ";", obj.Time, obj.Status>0 ? "":"+","]")
+    print(io, "(", round(obj.Entry,ndigits), ";", round(obj.Time,ndigits), obj.Status>0 ? "":"+","]")
 end
 
 function show(io::IO, obj::CompRisk)
-    print(io, "(", obj.Entry, ";", obj.Time, ":", obj.Status==0 ? "+" : obj.Cause,"]")
+    print(io, "(", round(obj.Entry,ndigits), ";", round(obj.Time,ndigits), ":", obj.Status==0 ? "+" : obj.Cause,"]")
 end
 
 function show(io::IO, obj::SurvInt)
     if obj.Status==EventHistory.CensNot val=obj.Time
-    elseif obj.Status==EventHistory.CensLeft val=string("(-Inf;",obj.Time2,"]")
-    elseif obj.Status==EventHistory.CensRight val=string("[",Time,";Inf)")
-    else val = string("[",obj.Time,";",obj.Time2,"]"); end
+    elseif obj.Status==EventHistory.CensLeft val=string("(-Inf;",round(obj.Time2,ndigits),"]")
+    elseif obj.Status==EventHistory.CensRight val=string("[",round(Time,ndigits),";Inf)")
+    else val = string("[",round(obj.Time,ndigits),";",round(obj.Time2,ndigits),"]"); end
     print(io,val)
 end
 
@@ -97,7 +99,7 @@ Accessors
 # Meta-programming definitions of Time,Entry,Status,Cause access methods
 for key = (:Time, :Entry, :Status, :Cause)
     for typ = (:Vector, :Matrix) #, :(DataFrames.DataVector))
-        @eval function $(key){T<:EventClass}(e::$(typ){T})
+        @eval function $(key){T<:EventHistory.EventClass}(e::$(typ){T})
             ##$(symbol(string("Event_",key)))(e)
             n = length(e)
             res = Array{typeof(e[1].$(key))}(n)
@@ -108,9 +110,6 @@ for key = (:Time, :Entry, :Status, :Cause)
         end
     end
 end
-
-export Time,Entry,Status,Cause
-
 
 #=
 Event constructor
