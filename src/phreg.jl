@@ -57,7 +57,7 @@ function coxprep(exit,status,X=[],entry=[]; id=[], weights=[], offset=[])
     Truncation = size(entry,1)==size(exit,1)
     n = size(exit,1)
     p = size(X,2)
-    truncation = size(entry,1)==n    
+    truncation = size(entry,1)==n
     XX = Array{Real}(n, p*p) ## Calculate XX' at each time-point
     ##  XX = Array{Real}(p, p, n)
     if size(X,1)>0
@@ -96,7 +96,7 @@ function coxprep(exit,status,X=[],entry=[]; id=[], weights=[], offset=[])
     end
     if length(offset)>1
         offset = offset[ord]
-    end    
+    end
     if size(X,1)>0
         X = X[ord,:]
         XX = XX[ord,:]
@@ -130,11 +130,11 @@ function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector;
                weights=[], offset=[],
                indiv=false)
     n = size(X,1)
-    p = size(X,2)   
+    p = size(X,2)
     Xb = X*beta
     if (length(offset)>1)
         Xb += offset
-    end    
+    end
     eXb = map(exp,Xb)
     if length(offset)>0
         eXb += offset
@@ -163,7 +163,7 @@ function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector;
     grad = (X[jumps,:]-E) ## Score
     val = Xb[jumps]-log.(S0[jumps]) ## Partial log-likelihood
     if length(weights)>0
-        #val .*= weights[jumps]        
+        #val .*= weights[jumps]
     end
     hess = -(reshape(sum(D2,1),p,p)-E'E)
     if indiv
@@ -234,4 +234,3 @@ end
 function coeftable(mm::EventHistoryModel)
     mm.coefmat
 end
-

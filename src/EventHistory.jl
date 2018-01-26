@@ -60,7 +60,7 @@ function Time(T::Any)
     for i=1:n
         res[i] = T[i].Time
     end
-    return res    
+    return res
 end
 
 export phreg, Event, predict, coef, vcov, coeftable,

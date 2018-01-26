@@ -61,7 +61,7 @@ immutable SurvInt <: EventClass
 end
 
 const Events = Vector{EventClass}
-const Vec = Union{Vector,Matrix} 
+const Vec = Union{Vector,Matrix}
 const BoolVec = Union{Vector{Bool},Matrix{Bool},BitVector}
 
 
@@ -159,7 +159,7 @@ function Event(time::Vec,
         E = Array{EventHistory.CompRisk}(n)
     else
         E = Array{EventHistory.CompRisk}(sz[1],sz[2])
-    end    
+    end
     for i=1:n
         E[i] = EventHistory.CompRisk(0,time[i],status[i])
     end
@@ -173,7 +173,7 @@ function Event(entry::Vec,
     sz = size(time)
     if (length(sz)==1)
         E = Array{EventHistory.SurvTrunc}(n)
-    else            
+    else
         E = Array{EventHistory.SurvTrunc}(sz[1],sz[2])
     end
     for i=1:n
@@ -197,7 +197,7 @@ function Event(entry::Vec,
     # end
     if (length(sz)==1)
         E = Array{EventHistory.CompRisk}(n)
-    else            
+    else
         E = Array{EventHistory.CompRisk}(sz[1],sz[2])
     end
     for i=1:n
