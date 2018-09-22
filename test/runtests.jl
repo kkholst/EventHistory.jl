@@ -1,4 +1,4 @@
-using Base.Test, DataFrames, EventHistory, StatsModels
+using Test, DataFrames, EventHistory, StatsModels
 
 function test_show(x)
     io = IOBuffer()

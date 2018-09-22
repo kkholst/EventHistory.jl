@@ -15,12 +15,13 @@ using Distributions, DataFrames, StatsModels
 import Base.show
 import StatsBase: coef, coeftable, CoefTable, coefnames, confint, vcov, predict
 import Calculus: deparse
+import LinearAlgebra: pinv, diag
 import StatsModels: Formula, ModelFrame, ModelMatrix
 using StatsBase: StatisticalModel, RegressionModel
-using Compat
-import Compat.String
+# using Compat
+# import Compat.String
 
-type EventHistoryModel <: RegressionModel
+mutable struct EventHistoryModel <: RegressionModel
     model::AbstractString
     formula::Formula
     eventtype::DataType
@@ -53,15 +54,6 @@ include("phreg.jl") ## Cox Proportional Hazards Model
 #include("lifetable.jl") ## Life-table construction
 #include("aalen.jl") ## Aalens Additive Model
 include("optim.jl") ## Optimization routines
-
-function Time(T::Any)
-    n = length(T)
-    res = Array{Float64}(n)
-    for i=1:n
-        res[i] = T[i].Time
-    end
-    return res
-end
 
 export phreg, Event, predict, coef, vcov, coeftable,
     Time, Status, Cause, Entry

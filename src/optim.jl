@@ -1,4 +1,4 @@
-type D2Function
+struct D2Function
     value::Float64
     gradient::Array{Float64,1}
     hessian::Array{Float64,2}
@@ -23,7 +23,7 @@ function NR(f, x; iter=200,tol=1e-12,verbose=false,method=0,gamma=1,trace=0)
         elseif method==2
             W = pinv(-H + gamma*S*S')
         else
-            W = pinv(-H)
+            W = inv(-H)
         end
         if trace>0
             print(S')
@@ -31,7 +31,13 @@ function NR(f, x; iter=200,tol=1e-12,verbose=false,method=0,gamma=1,trace=0)
         delta = W*S
         x0 = x; loglik0 = loglik
         lambda=1;
-        while s>=s0 || loglik<loglik0
+        val = f(x0)
+        S = val.gradient::Vector{Float64};  H = val.hessian::Matrix{Float64};
+        print("x=",x0, " loglik=", val.value, " grad=", S, "\n")
+        # s = mean(S.*S)
+        # print(s,"\n")
+        # x = x0 + lambda*delta
+        while (s>=s0 || loglik<loglik0)
             x = x0+lambda*delta
             val = f(x)
             counter += 1
@@ -44,6 +50,7 @@ function NR(f, x; iter=200,tol=1e-12,verbose=false,method=0,gamma=1,trace=0)
                 error("Lack of convergence (bad starting values?)")
             end
         end
+        print("counter=", counter, "\n")
     end
     return x,val,counter
 end

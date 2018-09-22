@@ -10,6 +10,8 @@ function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector;
         EventHistory.coxPL(beta,pre["X"],pre["XX"],pre["sign"],pre["jumps"],
                            weights=pre["weights"], offset=pre["offset"],
                            indiv=indiv)
+    # val = pl(beta)
+    # return val
     val = EventHistory.NR(pl,beta; opt...)
     beta = vec(val[1]); grad = val[2].gradient; steps = val[3];
     U = pl(beta,true)
@@ -17,10 +19,17 @@ function phreg(X::Matrix, t::Vector, status::Vector, entry::Vector;
     iid = U[2]*I
     V =  iid'iid
     coefmat = [beta sqrt.(diag(V)) sqrt.(diag(I))]
-    coefmat = [coefmat 2*Distributions.cdf.(Distributions.Normal(0,1),-abs.(coefmat[:,1]./coefmat[:,2]))]
+    pval = Array{Float64}(undef, size(coefmat,1))
+    N = Distributions.Normal(0,1)
+    Z = -abs.(coefmat[:,1]./coefmat[:,2])
+    for i=1:size(coefmat,1)
+        pval[i] = 2*Distributions.cdf(N, Z[i])
+    end
+    #coefmat = [coefmat 2*Distributions.cdf.(Distributions.Normal(0,1),-abs.(coefmat[:,1]./coefmat[:,2]))]
+    coefmat = [coefmat pval]
     cc = CoefTable(coefmat,["Estimate","S.E","naive S.E.","P-value"],
                    repeat([""],inner=[size(coefmat,1)]))
-    chaz = [pre["jumps"] pre["time"][pre["jumps"]] cumsum(1./(U[4][pre["jumps"]]))]
+    chaz = [pre["jumps"] pre["time"][pre["jumps"]] cumsum(1 ./ (U[4][pre["jumps"]]))]
     EventHistoryModel("Cox",
                       Formula(:.,:.),
                       EventHistory.Surv,
@@ -33,17 +42,17 @@ end
 
 
 function phreg(formula::Formula, data::DataFrame;
-               opt...)
+        opt...)
     M = StatsModels.ModelFrame(formula,data)
     S = M.df[:,1] ## convert(Vector,M.df[:,1])
     time = EventHistory.Time(S)
     status = EventHistory.Status(S)
-    entry = try EventHistory.Entry(S) catch [] end
+    entry = try EventHistory.Entry(S) catch nothing end
     X = StatsModels.ModelMatrix(M)
-    X = X.m[:,collect(2:size(X.m,2))]
+    X = X.m[:, collect(2:size(X.m,2))]
     res = EventHistory.phreg(X, time, status, entry; opt...)
     cnames = setdiff(coefnames(M),["(Intercept)"])
-    res.coefmat.rownms=cnames
+    res.coefmat.rownms = cnames
     res.formula = formula
     res.eventtype = typeof(S[1])
     res
@@ -58,8 +67,8 @@ function coxprep(exit,status,X=[],entry=[]; id=[], weights=[], offset=[])
     n = size(exit,1)
     p = size(X,2)
     truncation = size(entry,1)==n
-    XX = Array{Real}(n, p*p) ## Calculate XX' at each time-point
-    ##  XX = Array{Real}(p, p, n)
+    XX = Array{Float64}(undef, n, p*p) ## Calculate XX' at each time-point
+    ##  XX = Array{Float64}(p, p, n)
     if size(X,1)>0
         for i=1:n
             Xi = X[i,:]'
@@ -69,7 +78,7 @@ function coxprep(exit,status,X=[],entry=[]; id=[], weights=[], offset=[])
     end
     sgn=[]
     if truncation
-        sgn = Array{Int}(2*n); fill!(sgn,1)
+        sgn = Array{Int}(undef, 2*n); fill!(sgn,1)
         status = [status;status]
         for i=1:n
             sgn[i] = -1
@@ -85,7 +94,7 @@ function coxprep(exit,status,X=[],entry=[]; id=[], weights=[], offset=[])
             offset = [offset;offset];
         end
     end
-    ord0 = sortperm(status*1,rev=true)
+    ord0 = sortperm(status*1, rev=true)
     ord = sortperm(exit[ord0])
     ord = ord0[ord]
     if (truncation)
@@ -103,7 +112,7 @@ function coxprep(exit,status,X=[],entry=[]; id=[], weights=[], offset=[])
     end
     exit = exit[ord]
     status = status[ord]
-    jumps = find(status)
+    jumps = findall(status)
     Dict("X"=>X, "XX"=>XX, "jumps"=>jumps, "sign"=>sgn,
      "ord"=>ord, "time"=>exit, "id"=>[], "weights"=>weights, "offset"=>offset)
 end
@@ -115,7 +124,7 @@ function revcumsum(A,dim=1)
     D = size(A)
     n = D[dim]
     res = similar(A)
-    prev = zeros(Real,1,size(A,2))
+    prev = zeros(Float64, 1, size(A,2))
     for i=1:n
         idx =
         prev += A[n-i+1,:]
@@ -148,29 +157,30 @@ function coxPL(beta::Vector, X::Matrix, XX::Matrix, sgn::Vector, jumps::Vector;
     S0 = revcumsum(eXb)
     E = similar(X)
     D2 = similar(XX)
-    S1 = Array{Real}(n,p)
+    S1 = Array{Float64}(undef, n, p)
     S2 = similar(XX)
     for j=1:p
-        if (indiv) S1[:,j] = revcumsum(X[:,j].*eXb); end
-        E[:,j] = revcumsum(X[:,j].*eXb)./S0 ## S1/S0(s)
+        if (indiv) S1[:,j] = revcumsum(X[:,j] .* eXb); end
+        E[:,j] = revcumsum(X[:,j].*eXb) ./ S0 ## S1/S0(s)
     end
     for j=1:size(XX,2)
-        if (indiv) S2[:,j] = revcumsum(XX[:,j].*eXb); end
-        D2[:,j] = revcumsum(XX[:,j].* eXb)./S0 ## int S2/S0(s)
+        if (indiv) S2[:, j] = revcumsum(XX[:,j] .* eXb); end
+        D2[:,j] = revcumsum(XX[:,j].* eXb) ./ S0 ## int S2/S0(s)
     end
-    D2 = D2[jumps,:]
-    E = E[jumps,:]
-    grad = (X[jumps,:]-E) ## Score
-    val = Xb[jumps]-log.(S0[jumps]) ## Partial log-likelihood
+    D2 = D2[jumps, :]
+    E = E[jumps, :]
+    grad = (X[jumps, :] -E) ## Score
+    val = Xb[jumps] -log.(S0[jumps]) ## Partial log-likelihood
     if length(weights)>0
         #val .*= weights[jumps]
     end
-    hess = -(reshape(sum(D2,1),p,p)-E'E)
+    hess = -(reshape(sum(D2, dims=1), p, p) - E'E)
     if indiv
-        return(val,grad,hess,vec(S0),S1,S2,E)
+        return(val, grad, hess, vec(S0), S1, S2, E)
     end
-    val = sum(val); grad = sum(grad,1)
-    EventHistory.D2Function(val[1],vec(grad),hess)
+    
+    val = sum(val); grad = sum(grad, dims=1)
+    EventHistory.D2Function(val[1], vec(grad), hess)
 end
 
 ###}}} coxPL
@@ -182,7 +192,7 @@ end
 function sindex(jump::Vector, eval::Vector)
     N = size(eval,1)
     n = size(jump,1)
-    index = Array{Int64}(N)
+    index = Array{Int64}(undef, N)
     j = 1::Int64
     for t=1:N
         while (j<n) & (jump[j]<eval[t])
@@ -208,13 +218,13 @@ function predict(mm::EventHistory.EventHistoryModel; X=[]'::Matrix,time=mm.event
         H = exp.(X*coef(mm))
         res = L0.*H
     else
-        res = Array{Real}(size(time,1),size(X,1))
+        res = Array{Float64}(undef, size(time,1), size(X,1))
         for i=1:size(X,1)
             res[:,i] = L0.*exp.(X[i,:]'coef(mm))
         end
     end
     if surv res = exp.(-res) end
-    res = convert(Array{Real},[time res])
+    res = convert(Array{Float64},[time res])
     if order
         return(res[sortperm(time),:])
     end

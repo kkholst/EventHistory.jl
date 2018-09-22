@@ -1,4 +1,6 @@
 import EventHistory
+
+using EventHistory
 using DataFrames
 using StatsModels
 ##reload("EventHistory")
@@ -17,7 +19,7 @@ EventHistory.Status(e1)
 
 ## Right-censored+left truncation
 start = [0,1,2];
-e2    = EventHistory.Event(start,stop,status)
+e2    = EventHistory.Event(start,stop,status);
 
 EventHistory.Entry(e2)
 
@@ -31,7 +33,7 @@ EventHistory.Cause(e3)
 ## Interval censoring
 right = [2,3,Inf];
 left  = [1,-Inf,1];
-e4    = EventHistory.Event(left,right,"interval")
+e4    = EventHistory.Event(left,right,"interval");
 
 ## Formula syntax (see also below)
 d = DataFrames.DataFrame(start=start,stop=stop,status=status);
@@ -44,6 +46,14 @@ EventHistory.Event([:start,:stop,:status],d)
 ##################################################
 using RDatasets
 ovarian = dataset("survival", "ovarian");
+
+using CSV
+ovarian = CSV.read(expanduser("~/ovarian.csv"));
+ovarian[:Rx] = ovarian[:rx];
+ovarian[:Age] = ovarian[:age];
+ovarian[:FUTime] = ovarian[:futime];
+ovarian[:FUStat] = ovarian[:fustat];
+
 ovarian[:Group] = ovarian[:Rx].-1;
 S = EventHistory.Event([:FUTime,:FUStat], ovarian);
 ovarian[:S] = EventHistory.Event([:FUTime,:FUStat], ovarian);
